@@ -25,7 +25,6 @@ public class NotificationService : INotificationService
     {
         try
         {
-            // _logger.LogInfo($"Подготовка к отправке уведомления типа {request.Type} получателю {request.Recipient}");
             _logger.LogInfo($"Доступные отправители: {string.Join(", ", _senders.Select(s => s.Type))}");
 
             var sender = _senders.FirstOrDefault(s => s.Type == request.Type);
@@ -34,7 +33,7 @@ public class NotificationService : INotificationService
                 throw new InvalidOperationException($"Отправитель для типа уведомления {request.Type} не найден");
             }
 
-            // _logger.LogInfo($"Найден отправитель типа {sender.Type}");
+            _logger.LogInfo($"Найден отправитель типа {sender.Type}");
 
             string subject = request.Subject;
             string body = request.Body;
@@ -42,22 +41,17 @@ public class NotificationService : INotificationService
             // Если указан шаблон, получаем его и подставляем параметры
             if (!string.IsNullOrEmpty(request.TemplateName))
             {
-                // _logger.LogInfo($"Поиск шаблона {request.TemplateName} для типа {request.Type}");
                 var template = await _templateRepository.GetBySubjectAndTypeAsync(request.TemplateName, request.Type, cancellationToken);
                 if (template == null)
                 {
                     throw new InvalidOperationException($"Template '{request.TemplateName}' not found for type {request.Type}");
                 }
 
-                // _logger.LogInfo($"Найден шаблон: {template.Subject}");
-
                 // Подставляем параметры в шаблон
                 subject = ReplaceTemplateParameters(template.Subject, request.TemplateParameters);
                 body = ReplaceTemplateParameters(template.Body, request.TemplateParameters);
                 
                 _logger.LogInfo($"Использован шаблон '{request.TemplateName}' для уведомления");
-                // _logger.LogInfo($"Тема после подстановки: {subject}");
-                // _logger.LogInfo($"Тело после подстановки: {body}");
             }
 
             _logger.LogInfo($"Отправка уведомления получателю {request.Recipient}");
