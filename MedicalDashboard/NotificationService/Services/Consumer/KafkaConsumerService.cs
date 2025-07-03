@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Confluent.Kafka;
+using NotificationService.Data.Models;
 using NotificationService.Extensions.Logging;
 using NotificationService.Handlers;
 
@@ -19,7 +20,7 @@ public class KafkaConsumerService<T> : BackgroundService, IMessageBroker
     private bool _isInitialized;
 
     public KafkaConsumerService(
-        [FromKeyedServices("main-consumer")] IConsumer<string, string> consumer,
+        IConsumer<string, string> consumer,
         ILogger<KafkaConsumerService<T>> logger,
         IServiceScopeFactory serviceScopeFactory)
     {
@@ -38,7 +39,6 @@ public class KafkaConsumerService<T> : BackgroundService, IMessageBroker
 
         _logger.LogSuccess($"KafkaConsumerService<{typeof(T).Name}> успешно инициализирован");
     }
-
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
         try
@@ -238,6 +238,19 @@ public class KafkaConsumerService<T> : BackgroundService, IMessageBroker
         try
         {
             _logger.LogInfo($"Содержимое сообщения: {consumeResult.Message.Value}");
+
+            // Проверка структуры сообщения
+            if (typeof(T) == typeof(NotificationRequest))
+            {
+                var jsonDocument = JsonDocument.Parse(consumeResult.Message.Value);
+                if (!jsonDocument.RootElement.TryGetProperty("recipient", out _) ||
+                    !jsonDocument.RootElement.TryGetProperty("subject", out _) ||
+                    !jsonDocument.RootElement.TryGetProperty("body", out _))
+                {
+                    _logger.LogWarning($"Сообщение не соответствует структуре NotificationRequest: {consumeResult.Message.Value}");
+                    return;
+                }
+            }
 
             var options = new JsonSerializerOptions
             {
