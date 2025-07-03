@@ -13,6 +13,8 @@
 ### Структура проекта
 ```
 backend
+├─── Kafka
+│    └── docker-compose-kafka.yml
 ├─── MedicalDashboard
 │    ├── DataCollectorService
 │    ├── DataAnalysisService
