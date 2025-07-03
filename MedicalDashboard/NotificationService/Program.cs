@@ -17,6 +17,7 @@ using NotificationService.Services.Retry;
 using NotificationService.Handlers;
 using NotificationService.Interfaces;
 using NotificationService.Repositories.Template;
+using NotificationService.WebPush.Sender;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Information);
@@ -69,6 +70,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 // cfg
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
@@ -97,18 +99,31 @@ builder.Services.AddSingleton<IProducer<string, string>>(sp =>
 });
 
 // Регистрация консьюмера Кафки
-builder.Services.AddKeyedSingleton<IConsumer<string, string>>("main-consumer", (sp, key) =>
+builder.Services.AddKeyedSingleton<IConsumer<string, string>>("patient-alert-consumer", (sp, key) =>
 {
+    var kafkaSettings = sp.GetRequiredService<KafkaSettings>();
     var config = new ConsumerConfig
     {
         BootstrapServers = kafkaSettings.BootstrapServers,
-        GroupId = kafkaSettings.GroupId,
+        GroupId = "patient-alert-group",
         AutoOffsetReset = Enum.Parse<AutoOffsetReset>(kafkaSettings.AutoOffsetReset),
-        ClientId = "main-consumer"
+        ClientId = "patient-alert-consumer"
     };
     return new ConsumerBuilder<string, string>(config).Build();
 });
 
+builder.Services.AddKeyedSingleton<IConsumer<string, string>>("notification-consumer", (sp, key) =>
+{
+    var kafkaSettings = sp.GetRequiredService<KafkaSettings>();
+    var config = new ConsumerConfig
+    {
+        BootstrapServers = kafkaSettings.BootstrapServers,
+        GroupId = "notification-group",
+        AutoOffsetReset = Enum.Parse<AutoOffsetReset>(kafkaSettings.AutoOffsetReset),
+        ClientId = "notification-consumer"
+    };
+    return new ConsumerBuilder<string, string>(config).Build();
+});
 
 // Добавление БД 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -119,9 +134,13 @@ builder.Services.AddScoped<INotificationTemplateRepository, NotificationTemplate
 
 // Регистрация сервисов
 builder.Services.AddSingleton<INotificationSender, EmailNotificationSender>();
+builder.Services.AddSingleton<INotificationSender, WebPushNotificationSender>();
 builder.Services.AddSingleton<IRetryService, RetryService>();
 builder.Services.AddScoped<INotificationService, NotificationService.Services.Notification.NotificationService>();
 builder.Services.AddScoped<IMessageHandler<NotificationRequest>, KafkaNotificationHandler>();
+builder.Services.AddScoped<IMessageHandler<PatientAlertMessage>, PatientAlertMessageHandler>(); 
+
+
 
 // Регистрация сервисов очереди
 builder.Services.Configure<QueueSettings>(builder.Configuration.GetSection("QueueSettings"));
@@ -134,7 +153,19 @@ builder.Logging.AddDebug();
 
 // Регистрация сервисов
 builder.Services.AddHostedService<KafkaInitializationService>();
-builder.Services.AddHostedService<KafkaConsumerService<NotificationRequest>>();
+builder.Services.AddHostedService<KafkaConsumerService<PatientAlertMessage>>(sp => 
+    new KafkaConsumerService<PatientAlertMessage>(
+        sp.GetRequiredKeyedService<IConsumer<string, string>>("patient-alert-consumer"),
+        sp.GetRequiredService<ILogger<KafkaConsumerService<PatientAlertMessage>>>(),
+        sp.GetRequiredService<IServiceScopeFactory>()
+    ));
+
+builder.Services.AddHostedService<KafkaConsumerService<NotificationRequest>>(sp => 
+    new KafkaConsumerService<NotificationRequest>(
+        sp.GetRequiredKeyedService<IConsumer<string, string>>("notification-consumer"),
+        sp.GetRequiredService<ILogger<KafkaConsumerService<NotificationRequest>>>(),
+        sp.GetRequiredService<IServiceScopeFactory>()
+    ));
 
 var app = builder.Build();
 
@@ -199,6 +230,7 @@ app.UseCors(corsPolicyBuilder => corsPolicyBuilder
 app.UseRouting();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationService.Hubs.AlertsHub>("/alerts"); 
 
 // Swagger
 app.UseSwagger();
