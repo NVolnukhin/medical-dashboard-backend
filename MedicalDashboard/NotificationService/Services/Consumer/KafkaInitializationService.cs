@@ -33,7 +33,8 @@ public class KafkaInitializationService : IHostedService
             // Список топиков для создания
             var topics = new[]
             {
-                "md-emails"
+                "md-emails",
+                "md-alerts"
             };
 
             foreach (var topic in topics)
