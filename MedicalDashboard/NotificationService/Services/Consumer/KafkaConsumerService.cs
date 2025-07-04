@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using Confluent.Kafka;
 using NotificationService.Data.Models;
-using NotificationService.Extensions.Logging;
 using NotificationService.Handlers;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Consumer;
 

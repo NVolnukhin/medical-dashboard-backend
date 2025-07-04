@@ -1,7 +1,7 @@
 using NotificationService.Data.Models;
-using NotificationService.Extensions.Logging;
 using NotificationService.Interfaces;
 using NotificationService.Repositories.Template;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Notification;
 

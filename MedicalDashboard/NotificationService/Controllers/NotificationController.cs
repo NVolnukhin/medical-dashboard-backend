@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using NotificationService.Data.Models;
 using NotificationService.Enums;
-using NotificationService.Extensions.Logging;
 using NotificationService.Services.Queue;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Controllers;
 

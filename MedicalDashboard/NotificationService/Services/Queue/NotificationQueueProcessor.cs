@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using NotificationService.Config;
-using NotificationService.Extensions.Logging;
 using NotificationService.Services.Notification;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Queue;
 

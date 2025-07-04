@@ -1,7 +1,6 @@
 using NotificationService.Data.Models;
-using NotificationService.Extensions.Logging;
-using NotificationService.Handlers;
 using NotificationService.Services.Queue;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Handlers;
 

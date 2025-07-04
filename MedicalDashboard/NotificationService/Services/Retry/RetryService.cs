@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using NotificationService.Config;
-using NotificationService.Extensions.Logging;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Retry;
 

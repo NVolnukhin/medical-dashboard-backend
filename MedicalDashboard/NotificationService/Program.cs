@@ -8,16 +8,15 @@ using NotificationService.Config;
 using NotificationService.Data;
 using NotificationService.Data.Models;
 using NotificationService.Email.Sender;
-using NotificationService.Extensions.Logging;
 using NotificationService.Handlers;
 using NotificationService.Services.Consumer;
 using NotificationService.Services.Notification;
 using NotificationService.Services.Queue;
 using NotificationService.Services.Retry;
-using NotificationService.Handlers;
 using NotificationService.Interfaces;
 using NotificationService.Repositories.Template;
 using NotificationService.WebPush.Sender;
+using Shared.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Information);

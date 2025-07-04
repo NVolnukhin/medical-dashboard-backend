@@ -4,10 +4,9 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using NotificationService.Config;
 using NotificationService.Enums;
-using NotificationService.Extensions.Logging;
 using NotificationService.Services.Retry;
-using NotificationService.Config;
 using NotificationService.Interfaces;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Email.Sender;
 
