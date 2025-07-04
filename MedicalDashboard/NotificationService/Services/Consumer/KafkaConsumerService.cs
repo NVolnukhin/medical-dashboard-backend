@@ -243,9 +243,9 @@ public class KafkaConsumerService<T> : BackgroundService, IMessageBroker
             if (typeof(T) == typeof(NotificationRequest))
             {
                 var jsonDocument = JsonDocument.Parse(consumeResult.Message.Value);
-                if (!jsonDocument.RootElement.TryGetProperty("recipient", out _) ||
-                    !jsonDocument.RootElement.TryGetProperty("subject", out _) ||
-                    !jsonDocument.RootElement.TryGetProperty("body", out _))
+                if (!jsonDocument.RootElement.TryGetProperty("Recipient", out _) ||
+                    !jsonDocument.RootElement.TryGetProperty("Subject", out _) ||
+                    !jsonDocument.RootElement.TryGetProperty("Body", out _))
                 {
                     _logger.LogWarning($"Сообщение не соответствует структуре NotificationRequest: {consumeResult.Message.Value}");
                     return;
