@@ -112,10 +112,10 @@ public class UserService: IUserService
             {
                 Type = 0,
                 Recipient = user.Email,
-                Subject = "Пароль изменен",
-                Body = "Пароль изменен",
+                Subject = "Password changed",
+                Body = "Password changed",
                 Priority = 1,
-                TemplateName = "Пароль изменен",
+                TemplateName = "Password changed",
                 TemplateParameters = new Dictionary<string, string>
                 {
                     { "userName", $"{user.FirstName} {user.LastName}" }

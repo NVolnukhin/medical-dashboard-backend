@@ -67,10 +67,10 @@ public class PasswordRecoveryService : IPasswordRecoveryService
                 {
                     Type = 0,
                     Recipient = email,
-                    Subject = "Запрос восстановления пароля",
-                    Body = "Запрос восстановления пароля",
+                    Subject = "Change password request",
+                    Body = "Change password request",
                     Priority = 0,
-                    TemplateName = "Запрос восстановления пароля",
+                    TemplateName = "Change password request",
                     TemplateParameters = new Dictionary<string, string>
                     {
                         { "userName", $"{user.FirstName} {user.LastName}" },
@@ -129,10 +129,10 @@ public class PasswordRecoveryService : IPasswordRecoveryService
             {
                 Type = 0,
                 Recipient = user.Email,
-                Subject = "Пароль восстановлен",
-                Body = "Пароль восстановлен",
+                Subject = "Password recovered",
+                Body = "Password recovered",
                 Priority = 1,
-                TemplateName = "Пароль восстановлен",
+                TemplateName = "Password recovered",
                 TemplateParameters = new Dictionary<string, string>
                 {
                     { "userName", $"{user.FirstName} {user.LastName}" }

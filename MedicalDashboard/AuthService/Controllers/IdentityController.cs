@@ -107,10 +107,10 @@ namespace AuthService.Controllers
                 {
                     Type = 0,
                     Recipient = request.Email,
-                    Subject = "Приветственное письмо",
-                    Body = "Приветственное письмо",
+                    Subject = "Welcome letter",
+                    Body = "Welcome letter",
                     Priority = 0,
-                    TemplateName = "Приветственное письмо",
+                    TemplateName = "Welcome letter",
                     TemplateParameters = new Dictionary<string, string>
                     {
                         { "userName", $"{request.FirstName} {request.LastName}" },
