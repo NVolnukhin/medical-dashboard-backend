@@ -9,7 +9,6 @@ namespace Services
 {
     public interface IGeneratorService
     {
-        MedicalIndicator Generate(Patient patient, MedicalIndicator previous);
         double GenerateHeartRate(double? previous);
         double GenerateSaturation(double? previous);
         (double systolic, double diastolic) GeneratePressure();

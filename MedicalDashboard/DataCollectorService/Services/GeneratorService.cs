@@ -17,32 +17,6 @@ namespace Services
             _logger = logger;
         }
 
-        public MedicalIndicator Generate(Patient patient, MedicalIndicator previous)
-        {
-            try
-            {
-                return new MedicalIndicator
-                {
-                    Timestamp = DateTime.UtcNow,
-                    HeartRate = GenerateHeartRate(previous?.HeartRate),
-                    Saturation = GenerateSaturation(previous?.Saturation),
-                    Temperature = GenerateTemperature(previous?.Temperature),
-                    RespirationRate = GenerateRespiration(previous?.RespirationRate),
-                    SystolicPressure = GeneratePressure().systolic,
-                    DiastolicPressure = GeneratePressure().diastolic,
-                    Hemoglobin = GenerateHemoglobin(previous?.Hemoglobin),
-                    Weight = GenerateWeight(previous?.Weight, patient.BaseWeight),
-                    BMI = GenerateBMI(previous?.BMI, patient.BaseWeight, patient.Height),
-                    Cholesterol = GenerateCholesterol(previous?.Cholesterol)
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка считывания показателей");
-                return previous ?? new MedicalIndicator();
-            }
-        }
-
         public double GenerateHeartRate(double? previous)
         {
             try
@@ -126,7 +100,15 @@ namespace Services
         {
             try
             {
-                double baseValue = previous ?? baseWeight;
+                double baseValue;
+                if (previous == null || previous == 0)
+                {
+                    baseValue = baseWeight;
+                }
+                else
+                {
+                    baseValue = previous.Value;
+                }
                 if (DateTime.Now.Hour > 18)
                 {
                     baseValue += 0.5;  // Вечером вес выше
