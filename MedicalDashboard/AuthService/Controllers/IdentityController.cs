@@ -166,7 +166,6 @@ namespace AuthService.Controllers
             try
             {
                 //получаем userId из клеймов и пытаемся обновть пароль
-                _logger.LogInfo($"смены пароля");
                 var userId = GetUserIdFromClaims();
                 var result = await _userService.UpdatePassword(userId, request);
                 
