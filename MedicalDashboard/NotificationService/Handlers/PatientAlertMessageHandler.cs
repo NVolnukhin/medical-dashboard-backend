@@ -3,7 +3,7 @@ using System.Text.Json;
 using NotificationService.Data.Models;
 using NotificationService.Enums;
 using NotificationService.Services.Notification;
-using NotificationService.Extensions.Logging;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Handlers;
 

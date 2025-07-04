@@ -1,6 +1,6 @@
 using NotificationService.Data.Models;
 using NotificationService.Enums;
-using NotificationService.Extensions.Logging;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Queue;
 

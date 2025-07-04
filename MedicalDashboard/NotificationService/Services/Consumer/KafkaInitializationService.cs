@@ -1,7 +1,7 @@
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using NotificationService.Config;
-using NotificationService.Extensions.Logging;
+using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Consumer;
 

@@ -1,7 +1,6 @@
-using System.Text.Json;
+using Shared.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
 using NotificationService.Enums;
-using NotificationService.Extensions.Logging;
 using NotificationService.Hubs;
 using NotificationService.Interfaces;
 
