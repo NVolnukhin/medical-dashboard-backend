@@ -9,13 +9,13 @@ namespace AuthService.Services.Jwt
 {
     public class JwtBuilder : IJwtBuilder
     {
-        private readonly JwtOptions _options;
+        private readonly JwtConfig _config;
 
-        public JwtBuilder(IOptions<JwtOptions> options)
+        public JwtBuilder(IOptions<JwtConfig> options)
         {
-            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+            _config = options.Value ?? throw new ArgumentNullException(nameof(options));
     
-            if (string.IsNullOrEmpty(_options.SecretKey))
+            if (string.IsNullOrEmpty(_config.SecretKey))
                 throw new ArgumentException("JWT SecretKey is not configured");
         }
 
@@ -23,7 +23,7 @@ namespace AuthService.Services.Jwt
         public async Task<string> GetTokenAsync(Guid userId)
         {
 
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));  // Ключ для подписи токена на основе секрета
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.SecretKey));  // Ключ для подписи токена на основе секрета
             var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
@@ -35,8 +35,8 @@ namespace AuthService.Services.Jwt
             var expirationDate = DateTime.UtcNow.AddDays(7);  // Срок действия токена TODO: изменпть на options.ExpiryMinutes
             
             var jwt = new JwtSecurityToken(
-                issuer: _options.Issuer,
-                audience: _options.Audience,
+                issuer: _config.Issuer,
+                audience: _config.Audience,
                 claims: claims,
                 signingCredentials:
                 signingCredentials,
@@ -84,7 +84,7 @@ namespace AuthService.Services.Jwt
                 {
                     return null;
                 }
-                var key = Encoding.UTF8.GetBytes(_options.SecretKey);
+                var key = Encoding.UTF8.GetBytes(_config.SecretKey);
                 var parameters = new TokenValidationParameters()
                 {
                     RequireExpirationTime = true,

@@ -56,10 +56,10 @@ namespace AuthService
             services.AddTransient<IPasswordRecoveryService, PasswordRecoveryService>();
             
             // Конфигурация натсроек JWT 
-            services.Configure<JwtOptions>(Configuration.GetSection("jwt"));
+            services.Configure<JwtConfig>(Configuration.GetSection("jwt"));
             
             // Чтение строки подключения для Kafka из конфигурации
-            services.Configure<KafkaSettings>(
+            services.Configure<KafkaConfig>(
                 configuration.GetSection("Kafka"));
             
             // Регистрация KafkaProducerService с использованием строки подключения как Transient
@@ -104,7 +104,7 @@ namespace AuthService
             });
             
             // Натсройки аутентификации JWT
-            var jwtSettings = Configuration.GetSection("jwt").Get<JwtOptions>();
+            var jwtSettings = Configuration.GetSection("jwt").Get<JwtConfig>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

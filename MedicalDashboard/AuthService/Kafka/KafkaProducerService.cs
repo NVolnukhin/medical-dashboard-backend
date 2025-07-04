@@ -9,20 +9,20 @@ namespace AuthService.Kafka;
 public class KafkaProducerService : IKafkaProducerService, IDisposable
 {
     private readonly IProducer<string, string> _producer;
-    private readonly KafkaSettings _settings;
+    private readonly KafkaConfig _config;
     private readonly ILogger<KafkaProducerService> _logger;
 
     public KafkaProducerService(
-        IOptions<KafkaSettings> settings,
+        IOptions<KafkaConfig> settings,
         ILogger<KafkaProducerService> logger)
     {
-        _settings = settings.Value;
+        _config = settings.Value;
         _logger = logger;
 
         var config = new ProducerConfig
         {
-            BootstrapServers = _settings.BootstrapServers,
-            ClientId = _settings.ProducerClientId
+            BootstrapServers = _config.BootstrapServers,
+            ClientId = _config.ProducerClientId
         };
 
         _producer = new ProducerBuilder<string, string>(config).Build();
@@ -30,11 +30,11 @@ public class KafkaProducerService : IKafkaProducerService, IDisposable
     
     // Конструктор для юнит-тестов
     public KafkaProducerService(
-        IOptions<KafkaSettings> settings,
+        IOptions<KafkaConfig> settings,
         ILogger<KafkaProducerService> logger,
         IProducer<string, string> testProducer)
     {
-        _settings = settings.Value;
+        _config = settings.Value;
         _logger = logger;
         _producer = testProducer;
     }
@@ -45,7 +45,7 @@ public class KafkaProducerService : IKafkaProducerService, IDisposable
         {
             var jsonMessage = JsonSerializer.Serialize(message);
             var deliveryResult = await _producer.ProduceAsync(
-                _settings.TopicName,
+                _config.TopicName,
                 new Message<string, string>
                 {
                     Key = Guid.NewGuid().ToString(),

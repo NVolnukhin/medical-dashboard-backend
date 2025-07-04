@@ -1,6 +1,6 @@
 namespace AuthService.Kafka
 {
-    public class KafkaSettings
+    public class KafkaConfig
     {
         public string BootstrapServers { get; set; }
         public string TopicName { get; set; }

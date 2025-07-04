@@ -1,6 +1,6 @@
 namespace AuthService.Services.Jwt;
 
-public class JwtOptions
+public class JwtConfig
 {
     public string SecretKey { get; set; }
     public int ExpiryMinutes { get; set; }
