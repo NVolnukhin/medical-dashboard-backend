@@ -1,4 +1,6 @@
-namespace NotificationService.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+
+namespace Shared.Extensions.Logging;
 
 public static class LoggerExtensions
 {
