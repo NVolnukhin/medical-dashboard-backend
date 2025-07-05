@@ -44,6 +44,21 @@ services:
       - shared_net_test
       - kafka_kafka-network
 
+  dashboard-api:
+    build:
+      context: .
+      dockerfile: DashboardAPI/Dockerfile
+    ports:
+      - "5259:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=${ENV:-Production}
+      - Kafka__BootstrapServers=kafka:29092
+      - ConnectionStrings__DefaultConnection=Host=dpg-d1k4c22dbo4c73f1bjo0-a.frankfurt-postgres.render.com;Port=5432;Database=medicaldashboarddb;Username=medicaldashboarddb_user;Password=QwqS9LfOgF3jvYLqAxGaQtsR7y5enMLY
+    networks:
+      - shared_net_test
+      - kafka_kafka-network
+
 networks:
   shared_net_test:
     name: shared_net_test
