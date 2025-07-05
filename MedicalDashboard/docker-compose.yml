@@ -1,0 +1,36 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Gateway/Dockerfile
+    ports:
+      - "7168:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ENV:-Production}
+    depends_on:
+      - auth-service
+    networks:
+      - shared_net_test
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: AuthService/Dockerfile
+    ports:
+      - "5249:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=${ENV:-Production}
+      - JwtSettings__SecretKey=9095a623-a23a-481a-aa0c-e0ad96edc103
+      - ConnectionStrings__DefaultConnection=Host=dpg-d1k4c22dbo4c73f1bjo0-a.frankfurt-postgres.render.com;Port=5432;Database=medicaldashboarddb;Username=medicaldashboarddb_user;Password=QwqS9LfOgF3jvYLqAxGaQtsR7y5enMLY
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__TopicName=md-emails
+    networks:
+      - shared_net_test
+      - kafka_kafka-network
+
+networks:
+  shared_net_test:
+    name: shared_net_test
+  kafka_kafka-network:
+    external: true
