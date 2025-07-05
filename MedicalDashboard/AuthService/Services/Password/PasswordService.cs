@@ -1,4 +1,4 @@
-﻿using AuthService.Services.Encryptor;
+﻿using Middleware;
 
 namespace AuthService.Services.Password
 {
