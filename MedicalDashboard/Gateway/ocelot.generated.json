@@ -9,8 +9,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5249
         }
       ],
       "AuthenticationOptions": {
@@ -27,8 +27,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5249
         }
       ],
       "AuthenticationOptions": {
@@ -45,8 +45,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5249
         }
       ],
       "AuthenticationOptions": {
@@ -63,8 +63,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5249
         }
       ],
       "AuthenticationOptions": {
@@ -81,8 +81,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5249
         }
       ],
       "AuthenticationOptions": {
@@ -99,8 +99,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5249
         }
       ],
       "AuthenticationOptions": {
@@ -117,8 +117,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -135,8 +135,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -153,8 +153,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -171,8 +171,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -189,8 +189,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -207,8 +207,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -225,8 +225,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -243,8 +243,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -261,8 +261,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -279,8 +279,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -297,8 +297,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
@@ -315,12 +315,66 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "dashboard-api",
-          "Port": 80
+          "Host": "localhost",
+          "Port": 5259
         }
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/notifications/notify",
+      "UpstreamHttpMethod": [
+        "POST"
+      ],
+      "DownstreamPathTemplate": "/api/notifications/notify",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5250
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/notifications/types",
+      "UpstreamHttpMethod": [
+        "GET"
+      ],
+      "DownstreamPathTemplate": "/api/notifications/types",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5250
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/notifications/priorities",
+      "UpstreamHttpMethod": [
+        "GET"
+      ],
+      "DownstreamPathTemplate": "/api/notifications/priorities",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5250
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
         "AllowedScopes": []
       }
     }
