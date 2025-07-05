@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway", "Gateway\Gateway.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{EF7C0B90-717A-4DB2-9FAA-9645714B4C99}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Middleware", "Middleware\Middleware.csproj", "{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{EF7C0B90-717A-4DB2-9FAA-9645714B4C99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EF7C0B90-717A-4DB2-9FAA-9645714B4C99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EF7C0B90-717A-4DB2-9FAA-9645714B4C99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

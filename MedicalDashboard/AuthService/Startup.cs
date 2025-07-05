@@ -3,7 +3,6 @@ using AuthService.Kafka;
 using AuthService.Models;
 using AuthService.Repository.PasswordRecovery;
 using AuthService.Repository.User;
-using AuthService.Services.Encryptor;
 using AuthService.Services.Identity;
 using AuthService.Services.Jwt;
 using AuthService.Services.Password;
@@ -15,6 +14,7 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Middleware;
 
 namespace AuthService
 {
