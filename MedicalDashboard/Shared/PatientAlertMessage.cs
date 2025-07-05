@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace NotificationService.Data.Models;
+namespace Shared;
 
 public class PatientAlertMessage
 {
