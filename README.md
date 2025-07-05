@@ -17,12 +17,35 @@ backend
 │    └── docker-compose-kafka.yml
 ├─── MedicalDashboard
 │    ├── DataCollectorService
+│    │    ├── realization
+│    │    ├── DataCollectorService.csproj
+│    │    └── Dockerfile
 │    ├── DataAnalysisService
+│    │    ├── realization
+│    │    ├── DataAnalysisService.csproj
+│    │    └── Dockerfile
 │    ├── NotificationService
+│    │    ├── realization
+│    │    ├── NotificationService.csproj
+│    │    └── Dockerfile
 │    ├── DashboardAPI
+│    │    ├── realization
+│    │    ├── DashboardAPI.csproj
+│    │    └── Dockerfile
 │    ├── AuthService
+│    │    ├── realization
+│    │    ├── AuthService.csproj
+│    │    └── Dockerfile
 │    ├── Gateway
-│    ├── SharedContracts
+│    │    ├── realization
+│    │    ├── Gateway.csproj
+│    │    └── Dockerfile
+│    ├── Shared
+│    │    ├── contracts
+│    │    └── DataCollectorService.csproj 
+│    ├── Middleware
+│    │    ├── middleware
+│    │    └── Middleware.csproj
 │    ├── MedicalDashboard.sln
 │    └── docker-compose.yml
 ├──── .gitignore
