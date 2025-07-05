@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Rewrite;
 using Middleware;
+using Middleёёware;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Newtonsoft.Json.Linq;
@@ -57,12 +58,24 @@ builder.Services.AddSwaggerForOcelot(builder.Configuration);
 builder.Services.AddOcelot(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
+// Добавляем поддержку WebSocket
+builder.Services.AddSignalR();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", builder =>
-        builder.AllowAnyOrigin()
+        builder.WithOrigins(
+                "http://localhost:3000",  // React/Next.js
+                "http://localhost:4200",  // Angular
+                "http://localhost:8080",  // Vue.js
+                "http://localhost:5000",  // Другие dev серверы
+                "http://localhost:5173",  // Vite
+                "http://localhost:3001",  // Дополнительные порты
+                "http://localhost:3002"
+            )
                .AllowAnyMethod()
-               .AllowAnyHeader());
+               .AllowAnyHeader()
+               .AllowCredentials()); // Важно для WebSocket
 });
 
 // Приложение
@@ -77,6 +90,11 @@ app.UseRouting();
 app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Добавляем SignalR прокси middleware перед Ocelot
+app.UseWebSockets();
+
+app.UseMiddleware<SignalRProxyMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerForOcelotUI(opt =>
