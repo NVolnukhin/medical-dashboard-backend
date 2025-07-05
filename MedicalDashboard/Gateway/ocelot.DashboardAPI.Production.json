@@ -1,118 +1,8 @@
 {
   "Routes": [
     {
-      "UpstreamPathTemplate": "/identity/login",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
-      "DownstreamPathTemplate": "/api/identity/login",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": null,
-        "AllowedScopes": []
-      }
-    },
-    {
-      "UpstreamPathTemplate": "/identity/register",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
-      "DownstreamPathTemplate": "/api/identity/register",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": null,
-        "AllowedScopes": []
-      }
-    },
-    {
-      "UpstreamPathTemplate": "/identity/validate",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
-      "DownstreamPathTemplate": "/api/identity/validate",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": null,
-        "AllowedScopes": []
-      }
-    },
-    {
-      "UpstreamPathTemplate": "/identity/update-password",
-      "UpstreamHttpMethod": [
-        "PUT"
-      ],
-      "DownstreamPathTemplate": "/api/identity/update-password",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
-      }
-    },
-    {
-      "UpstreamPathTemplate": "/password-recovery/request",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
-      "DownstreamPathTemplate": "/api/password-recovery/request",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": null,
-        "AllowedScopes": []
-      }
-    },
-    {
-      "UpstreamPathTemplate": "/password-recovery/confirm",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
-      "DownstreamPathTemplate": "/api/password-recovery/confirm",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": null,
-        "AllowedScopes": []
-      }
-    },
-    {
       "UpstreamPathTemplate": "/patients",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/api/patients",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -128,9 +18,7 @@
     },
     {
       "UpstreamPathTemplate": "/patients/{id}",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/api/patients/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -146,9 +34,7 @@
     },
     {
       "UpstreamPathTemplate": "/patients",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
+      "UpstreamHttpMethod": [ "POST" ],
       "DownstreamPathTemplate": "/api/patients",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -164,9 +50,7 @@
     },
     {
       "UpstreamPathTemplate": "/patients/{id}",
-      "UpstreamHttpMethod": [
-        "PUT"
-      ],
+      "UpstreamHttpMethod": [ "PUT" ],
       "DownstreamPathTemplate": "/api/patients/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -182,9 +66,7 @@
     },
     {
       "UpstreamPathTemplate": "/patients/{id}",
-      "UpstreamHttpMethod": [
-        "DELETE"
-      ],
+      "UpstreamHttpMethod": [ "DELETE" ],
       "DownstreamPathTemplate": "/api/patients/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -200,9 +82,7 @@
     },
     {
       "UpstreamPathTemplate": "/metrics/{patientId}",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/api/metrics/{patientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -218,9 +98,7 @@
     },
     {
       "UpstreamPathTemplate": "/metrics/latest/{patientId}",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/api/metrics/latest/{patientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -236,9 +114,7 @@
     },
     {
       "UpstreamPathTemplate": "/metrics",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
+      "UpstreamHttpMethod": [ "POST" ],
       "DownstreamPathTemplate": "/api/metrics",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -254,9 +130,7 @@
     },
     {
       "UpstreamPathTemplate": "/alerts",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/api/alerts",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -272,9 +146,7 @@
     },
     {
       "UpstreamPathTemplate": "/alerts/{id}",
-      "UpstreamHttpMethod": [
-        "GET"
-      ],
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/api/alerts/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -290,9 +162,7 @@
     },
     {
       "UpstreamPathTemplate": "/alerts/{id}/ack",
-      "UpstreamHttpMethod": [
-        "POST"
-      ],
+      "UpstreamHttpMethod": [ "POST" ],
       "DownstreamPathTemplate": "/api/alerts/{id}/ack",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -308,9 +178,7 @@
     },
     {
       "UpstreamPathTemplate": "/alerts/{id}",
-      "UpstreamHttpMethod": [
-        "DELETE"
-      ],
+      "UpstreamHttpMethod": [ "DELETE" ],
       "DownstreamPathTemplate": "/api/alerts/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -325,4 +193,4 @@
       }
     }
   ]
-}
+} 
