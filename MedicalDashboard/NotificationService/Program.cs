@@ -16,6 +16,7 @@ using NotificationService.Services.Retry;
 using NotificationService.Interfaces;
 using NotificationService.Repositories.Template;
 using NotificationService.WebPush.Sender;
+using Shared;
 using Shared.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
