@@ -24,6 +24,14 @@ public class MetricsHub : Hub
         _logger.LogSuccess($"SignalR: Успешная подписка на пациента {patientId}");
     }
 
+    public async Task SubscribeToPatientMetrics(Guid patientId)
+    {
+        _logger.LogInfo($"SignalR: Подписка на метрики пациента {patientId} для соединения {Context.ConnectionId}");
+        await _signalRService.AddToPatientGroupAsync(Context.ConnectionId, patientId);
+        await Clients.Caller.SendAsync("SubscribedToPatient", patientId);
+        _logger.LogSuccess($"SignalR: Успешная подписка на метрики пациента {patientId}");
+    }
+
     public async Task UnsubscribeFromPatient(Guid patientId)
     {
         _logger.LogInfo($"SignalR: Отписка от пациента {patientId} для соединения {Context.ConnectionId}");

@@ -162,10 +162,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecific", policy =>
     {
-        policy.WithOrigins("http://localhost:5000") // Укажите конкретные домены
+        policy.WithOrigins(
+                "http://localhost:7168",  // Gateway
+                "http://localhost:3000",  // React/Next.js
+                "http://localhost:4200",  // Angular
+                "http://localhost:8080",  // Vue.js
+                "http://localhost:5000"   // Другие dev серверы
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials(); // Уберите, если не нужны credentials
+            .AllowCredentials(); // Важно для SignalR
     });
 });
 
@@ -184,13 +190,44 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
-    app.UseHsts();
+    // Отключаем HTTPS редирект для WebSocket соединений
+    // app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowAll");
-app.UseRouting();
+// Добавляем поддержку WebSocket для SignalR В САМОМ НАЧАЛЕ
+app.UseWebSockets();
 
+app.UseCors("AllowSpecific");
+
+// Добавляем middleware для логирования WebSocket запросов
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Запрос: {Method} {Path} {Protocol}", 
+        context.Request.Method, 
+        context.Request.Path, 
+        context.Request.Protocol);
+    
+    // Логируем все заголовки
+    logger.LogInformation("Заголовки запроса:");
+    foreach (var header in context.Request.Headers)
+    {
+        logger.LogInformation("  {Key}: {Value}", header.Key, header.Value);
+    }
+    
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        logger.LogInformation("Это WebSocket запрос!");
+    }
+    else
+    {
+        logger.LogInformation("Это НЕ WebSocket запрос");
+    }
+    
+    await next();
+});
+
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
