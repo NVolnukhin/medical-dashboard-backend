@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Kafka;
 using Models;
 using Services;
+using Confluent.Kafka;
+using System.Text.Json;
 
 namespace Processors
 {
@@ -9,20 +12,29 @@ namespace Processors
     {
         private readonly IGeneratorService _generator;
         private readonly MetricGenerationConfig _config;
+        private readonly IKafkaService _kafkaService;
 
-        public HeartRateProcessor(IGeneratorService generator, IOptions<MetricGenerationConfig> config)
+        public HeartRateProcessor(IGeneratorService generator, 
+            IOptions<MetricGenerationConfig> config, 
+            IKafkaService kafkaService)
         {
             _generator = generator;
             _config = config.Value;
+            _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        
+
+        public async void Generate(Patient patient)
         {
             if (patient.MetricIntervals["HeartRate"] >= _config.HeartRateIntervalSeconds)
             {
-                patient.HeartRate.Value = _generator.GenerateHeartRate(patient.HeartRate.Value);
+                var newValue = _generator.GenerateHeartRate(patient.HeartRate.Value);
+                patient.HeartRate.Value = newValue;
                 patient.HeartRate.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["HeartRate"] = 0;
+
+                await _kafkaService.SendToKafka(patient, "HeartRate", newValue);
             }
         }
 

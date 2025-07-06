@@ -45,7 +45,8 @@
                 ["BMI"] = 0,
                 ["Hemoglobin"] = 0,
                 ["Cholesterol"] = 0,
-                ["Pressure"] = 0,
+                ["SysPressure"] = 0,
+                ["DiasPressure"] = 0,
                 ["Temperature"] = 0,
                 ["Respiration"] = 0
             };

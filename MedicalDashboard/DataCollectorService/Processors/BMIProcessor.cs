@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Kafka;
 
 namespace Processors
 {
@@ -14,22 +15,30 @@ namespace Processors
     {
         private readonly IGeneratorService _generator;
         private readonly MetricGenerationConfig _intervalSeconds;
+        private readonly IKafkaService _kafkaService;
 
-        public BMIProcessor(IGeneratorService generator, IOptions<MetricGenerationConfig> intervalSeconds)
+        public BMIProcessor(IGeneratorService generator, 
+            IOptions<MetricGenerationConfig> intervalSeconds,
+            IKafkaService kafkaService)
         {
             _generator = generator;
             _intervalSeconds = intervalSeconds.Value;
+            _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        public async void Generate(Patient patient)
         {
             if (patient.MetricIntervals["BMI"] >= _intervalSeconds.BmiIntervalSeconds)
             {
-                patient.BMI.Value = _generator.GenerateBMI(patient.BMI.Value, patient.BaseWeight, patient.Height);
+                var newValue = _generator.GenerateBMI(patient.BMI.Value, patient.BaseWeight, patient.Height);
+                patient.BMI.Value = newValue;
                 patient.BMI.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["BMI"] = 0;
+
+                await _kafkaService.SendToKafka(patient, "BMI", newValue);
             }
         }
+
 
         public void Log(Patient patient, ILogger logger)
         {
