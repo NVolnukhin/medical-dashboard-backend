@@ -29,6 +29,7 @@ public class PatientService : IPatientService
         if (!string.IsNullOrEmpty(patient.MiddleName))
             fullName += $" {patient.MiddleName}";
         fullName += $" {patient.LastName}";
+        fullName += $" из палаты №{patient.Ward}";
 
         return fullName;
     }
