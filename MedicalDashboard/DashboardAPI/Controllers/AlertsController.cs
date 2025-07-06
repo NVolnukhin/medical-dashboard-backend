@@ -8,7 +8,7 @@ using Shared.Extensions.Logging;
 namespace DashboardAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/patient-alerts")]
 [Authorize]
 public class AlertsController : ControllerBase
 {

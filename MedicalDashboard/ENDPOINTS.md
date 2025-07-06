@@ -27,10 +27,10 @@
 - `POST /metrics` - Создать метрику
 
 ### Алерты
-- `GET /alerts` - Список алертов (с фильтрацией и пагинацией)
-- `GET /alerts/{id}` - Алерт по ID
-- `POST /alerts/{id}/ack` - Подтвердить алерт
-- `DELETE /alerts/{id}` - Удалить алерт
+- `GET /patient-alerts` - Список алертов (с фильтрацией и пагинацией)
+- `GET /patient-alerts/{id}` - Алерт по ID
+- `POST /patient-alerts/{id}/ack` - Подтвердить алерт
+- `DELETE /patient-alerts/{id}` - Удалить алерт
 
 ## NotificationService
 
