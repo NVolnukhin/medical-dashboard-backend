@@ -2,6 +2,7 @@
 using Confluent.Kafka;
 using DataCollectorService.Models;
 using Microsoft.Extensions.Options;
+using Shared;
 
 namespace DataCollectorService.Kafka
 {
@@ -26,7 +27,8 @@ namespace DataCollectorService.Kafka
 
             _logger.LogInformation("Kafka configuration: " +
                 $"BootstrapServers={_config.BootstrapServers}, " +
-                $"Topic={_config.Topic}, " +
+                $"RawInformationTopic={_config.RawInformationTopic}, " +
+                $"MetricsTopic={_config.MetricsTopic}, " +
                 $"ClientId={_config.ClientId}");
 
             if (string.IsNullOrWhiteSpace(_config.BootstrapServers))
@@ -53,13 +55,12 @@ namespace DataCollectorService.Kafka
         {
             try
             {
-                var message = new
+                var message = new MetricDto
                 {
                     PatientId = patient.Id,
-                    PatientName = patient.Name,
-                    Metric = metricName,
-                    Value = value,
-                    Timestamp = DateTime.UtcNow
+                    Type = metricName,
+                    Timestamp = DateTime.UtcNow,
+                    Value = value
                 };
 
                 await ProduceAsync(
@@ -71,12 +72,60 @@ namespace DataCollectorService.Kafka
                 _logger.LogError(ex, $"Ошибка отправки {metricName} в Kafka");
             }
         }
+
+        public async Task SendToAllTopics(Patient patient, string metricName, double value)
+        {
+            try
+            {
+                var message = new MetricDto
+                {
+                    PatientId = patient.Id,
+                    Type = metricName, 
+                    Timestamp = DateTime.UtcNow,
+                    Value = value
+                };
+
+                var serializedMessage = JsonSerializer.Serialize(message);
+                var key = patient.Id.ToString();
+
+                // Отправляем в оба топика
+                var tasks = new List<Task>
+                {
+                    ProduceToTopic(_config.RawInformationTopic, key, serializedMessage),
+                    ProduceToTopic(_config.MetricsTopic, key, serializedMessage)
+                };
+
+                await Task.WhenAll(tasks);
+                _logger.LogDebug($"Отправлено сообщение {metricName} в оба топика для пациента {patient.Name}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка отправки {metricName} в оба топика Kafka");
+            }
+        }
+
+        private async Task ProduceToTopic(string topic, string key, string message)
+        {
+            try
+            {
+                var result = await _producer.ProduceAsync(
+                    topic,
+                    new Message<string, string> { Key = key, Value = message });
+
+                _logger.LogDebug($"Delivered message to {result.TopicPartitionOffset} (topic: {topic})");
+            }
+            catch (ProduceException<string, string> e)
+            {
+                _logger.LogError($"Delivery failed to topic {topic}: {e.Error.Reason}");
+            }
+        }
+
         public async Task ProduceAsync(string key, string message)
         {
             try
             {
                 var result = await _producer.ProduceAsync(
-                    _config.Topic,
+                    _config.RawInformationTopic,
                     new Message<string, string> { Key = key, Value = message });
 
                 _logger.LogDebug($"Delivered message to {result.TopicPartitionOffset}");
