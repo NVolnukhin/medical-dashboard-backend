@@ -78,21 +78,20 @@ public class DataAnalysisService : IDataAnalysisService
 
             // Получаем лимиты для данного типа метрики
             var limits = GetMetricLimits(metricType);
-            if (limits != null)
+            
+            // Проверка на выход за рамки допустимых значений
+            if (limits != null && (metric.Value < limits.Min || metric.Value > limits.Max))
             {
-                if (metric.Value < limits.Min || metric.Value > limits.Max)
+                if (CanSendAlert(lastAlertInfo, "alert"))
                 {
-                    if (CanSendAlert(lastAlertInfo, "alert"))
-                    {
-                        alerts.Add(("alert", $"Value {metric.Value} is outside limits [{limits.Min}, {limits.Max}]"));
-                        hasAlert = true;
-                    }
+                    alerts.Add(("alert", $"Value {metric.Value} is outside limits [{limits.Min}, {limits.Max}]"));
+                    hasAlert = true;
                 }
             }
 
-            // Проверка на 5%
+            // Проверка на изменение более чем на 5% - только если нет alert по лимитам
             var changePercent = Math.Abs((metric.Value - previousValue.Value) / previousValue.Value * 100);
-            if (changePercent > _analysisSettings.AlertThresholdPercent)
+            if (!hasAlert && changePercent > _analysisSettings.AlertThresholdPercent)
             {
                 if (CanSendAlert(lastAlertInfo, "alert"))
                 {
@@ -124,8 +123,10 @@ public class DataAnalysisService : IDataAnalysisService
                 }
             }
 
+            _logger.LogInfo($"Подготовлено алертов для отправки: {alerts.Count}");
             foreach (var (alertType, reason) in alerts)
             {
+                _logger.LogInfo($"Отправка алерта: {alertType} - {reason}");
                 await SendAlertAsync(metric.PatientId, metric.Type, alertType, reason);
             }
         }
