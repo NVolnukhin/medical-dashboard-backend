@@ -1,4 +1,5 @@
-﻿using DataCollectorService.Models;
+﻿using DataCollectorService.Kafka;
+using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
 
@@ -8,16 +9,20 @@ namespace DataCollectorService.Processors
     {
         private readonly IGeneratorService _generator;
         private readonly MetricGenerationConfig _intervalSeconds;
+        private readonly IKafkaService _kafkaService;
 
-        public PressureProcessor(IGeneratorService generator, IOptions<MetricGenerationConfig> intervalSeconds)
+        public PressureProcessor(IGeneratorService generator, 
+            IOptions<MetricGenerationConfig> intervalSeconds,
+            IKafkaService kafkaService)
         {
             _generator = generator;
             _intervalSeconds = intervalSeconds.Value;
+            _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
-            if (patient.MetricIntervals["Pressure"] >= _intervalSeconds.PressureIntervalSeconds)
+            if (patient.MetricIntervals["SysPressure"] >= _intervalSeconds.PressureIntervalSeconds)
             {
                 var systolic = _generator.GenerateSystolicPressure();
                 var diastolic = _generator.GenerateDiastolicPressure();
@@ -25,7 +30,11 @@ namespace DataCollectorService.Processors
                 patient.DiasPressure.Value = diastolic;
                 patient.SysPressure.LastUpdate = DateTime.UtcNow;
                 patient.DiasPressure.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Pressure"] = 0;
+                patient.MetricIntervals["SysPressure"] = 0;
+                patient.MetricIntervals["DiasPressure"] = 0;
+
+                await _kafkaService.SendToAllTopics(patient, "SysPressure", systolic);
+                await _kafkaService.SendToAllTopics(patient, "DiasPressure", diastolic);
             }
         }
 

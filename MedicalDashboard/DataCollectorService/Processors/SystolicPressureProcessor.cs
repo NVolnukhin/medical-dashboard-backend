@@ -20,7 +20,7 @@ namespace DataCollectorService.Processors
             _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
             if (patient.MetricIntervals["SysPressure"] >= _intervalSeconds.PressureIntervalSeconds)
             {
@@ -29,7 +29,7 @@ namespace DataCollectorService.Processors
                 patient.SysPressure.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["SysPressure"] = 0;
 
-                _kafkaService.SendToKafka(patient, "SysPressure", systolic);
+                await _kafkaService.SendToAllTopics(patient, "SysPressure", systolic);
             }
         }
 

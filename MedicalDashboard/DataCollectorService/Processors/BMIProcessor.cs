@@ -20,7 +20,7 @@ namespace DataCollectorService.Processors
             _kafkaService = kafkaService;
         }
 
-        public async void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
             if (patient.MetricIntervals["BMI"] >= _intervalSeconds.BmiIntervalSeconds)
             {
@@ -29,7 +29,7 @@ namespace DataCollectorService.Processors
                 patient.BMI.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["BMI"] = 0;
 
-                await _kafkaService.SendToKafka(patient, "BMI", newValue);
+                await _kafkaService.SendToAllTopics(patient, "BMI", newValue);
             }
         }
 

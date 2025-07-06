@@ -20,7 +20,7 @@ namespace DataCollectorService.Processors
             _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
             if (patient.MetricIntervals["Cholesterol"] >= _intervalSeconds.CholesterolIntervalSeconds)
             {
@@ -29,7 +29,7 @@ namespace DataCollectorService.Processors
                 patient.Cholesterol.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["Cholesterol"] = 0;
 
-                _kafkaService.SendToKafka(patient, "Cholesterol", newValue);
+                await _kafkaService.SendToAllTopics(patient, "Cholesterol", newValue);
             }
         }
 

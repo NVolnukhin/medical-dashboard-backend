@@ -20,9 +20,7 @@ namespace DataCollectorService.Processors
             _kafkaService = kafkaService;
         }
 
-        
-
-        public async void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
             if (patient.MetricIntervals["HeartRate"] >= _config.HeartRateIntervalSeconds)
             {
@@ -31,7 +29,7 @@ namespace DataCollectorService.Processors
                 patient.HeartRate.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["HeartRate"] = 0;
 
-                await _kafkaService.SendToKafka(patient, "HeartRate", newValue);
+                await _kafkaService.SendToAllTopics(patient, "HeartRate", newValue);
             }
         }
 

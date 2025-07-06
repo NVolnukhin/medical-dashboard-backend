@@ -4,7 +4,7 @@ namespace DataCollectorService.Processors
 {
     public interface IMetricProcessor
     {
-        void Generate(Patient patient);
+        Task Generate(Patient patient);
         void Log(Patient patient, ILogger logger);
     }
 }

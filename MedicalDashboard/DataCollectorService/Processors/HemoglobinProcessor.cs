@@ -20,7 +20,7 @@ namespace DataCollectorService.Processors
             _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
             if (patient.MetricIntervals["Hemoglobin"] >= _intervalSeconds.HemoglobinIntervalSeconds)
             {
@@ -29,7 +29,7 @@ namespace DataCollectorService.Processors
                 patient.Hemoglobin.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["Hemoglobin"] = 0;
 
-                _kafkaService.SendToKafka(patient, "Hemoglobin", newValue);
+                await _kafkaService.SendToAllTopics(patient, "Hemoglobin", newValue);
             }
         }
 

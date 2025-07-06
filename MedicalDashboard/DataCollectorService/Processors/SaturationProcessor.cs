@@ -20,7 +20,7 @@ namespace DataCollectorService.Processors
             _kafkaService = kafkaService;
         }
 
-        public void Generate(Patient patient)
+        public async Task Generate(Patient patient)
         {
             if (patient.MetricIntervals["Saturation"] >= _intervalSeconds.SaturationIntervalSeconds)
             {
@@ -29,7 +29,7 @@ namespace DataCollectorService.Processors
                 patient.Saturation.LastUpdate = DateTime.UtcNow;
                 patient.MetricIntervals["Saturation"] = 0;
 
-                _kafkaService.SendToKafka(patient, "Saturation", newValue);
+                await _kafkaService.SendToAllTopics(patient, "Saturation", newValue);
             }
         }
 
