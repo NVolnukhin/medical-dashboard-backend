@@ -11,4 +11,5 @@ public class MetricsConfig
     public MetricLimits Weight { get; set; } = new() { Min = 30, Max = 200 };
     public MetricLimits Hemoglobin { get; set; } = new() { Min = 120, Max = 180 };
     public MetricLimits Cholesterol { get; set; } = new() { Min = 3.0, Max = 5.2 };
+    public MetricLimits BMI { get; set; } = new() { Min = 18.5, Max = 24.9 };
 }

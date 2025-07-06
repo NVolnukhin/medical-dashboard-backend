@@ -10,5 +10,6 @@ public enum MetricType
     Saturation,              // сатурация
     Weight,                  // вес
     Hemoglobin,              // гемоглобин
-    Cholesterol              // холестерин
+    Cholesterol,             // холестерин
+    BMI                      // индекс массы тела
 }
