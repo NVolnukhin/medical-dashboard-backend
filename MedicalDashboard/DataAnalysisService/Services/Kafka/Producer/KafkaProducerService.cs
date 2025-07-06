@@ -28,7 +28,13 @@ public class KafkaProducerService : IKafkaProducerService, IDisposable
     {
         try
         {
-            var jsonMessage = JsonSerializer.Serialize(message);
+            var jsonOptions = new JsonSerializerOptions
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                WriteIndented = false
+            };
+            
+            var jsonMessage = JsonSerializer.Serialize(message, jsonOptions);
             var kafkaMessage = new Message<string, string>
             {
                 Key = Guid.NewGuid().ToString(),
