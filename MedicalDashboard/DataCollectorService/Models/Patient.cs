@@ -1,4 +1,4 @@
-﻿namespace Models
+﻿namespace DataCollectorService.Models
 {
     public class Patient
     {

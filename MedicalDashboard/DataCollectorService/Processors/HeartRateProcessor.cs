@@ -1,12 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DataCollectorService.Kafka;
+using DataCollectorService.Models;
+using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
-using Kafka;
-using Models;
-using Services;
-using Confluent.Kafka;
-using System.Text.Json;
 
-namespace Processors
+namespace DataCollectorService.Processors
 {
     public class HeartRateProcessor : IMetricProcessor
     {

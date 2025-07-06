@@ -1,15 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DataCollectorService.Kafka;
+using DataCollectorService.Models;
+using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
-using Models;
-using Services;
-using Kafka;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Processors
+namespace DataCollectorService.Processors
 {
     public class TemperatureProcessor : IMetricProcessor
     {

@@ -1,12 +1,6 @@
-﻿using System;
-using Confluent.Kafka;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Models;
+﻿using DataCollectorService.Models;
 
-namespace Kafka
+namespace DataCollectorService.Kafka
 {
     public interface IKafkaService
     {

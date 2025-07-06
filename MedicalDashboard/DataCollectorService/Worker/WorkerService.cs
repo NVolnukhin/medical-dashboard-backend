@@ -1,16 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using DataCollectorService.Models;
+using DataCollectorService.Processors;
+using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
-using Models;
-using Processors;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Services
+namespace DataCollectorService.Worker
 {
     public class WorkerService : BackgroundService
     {

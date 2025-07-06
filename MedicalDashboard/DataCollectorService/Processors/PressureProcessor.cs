@@ -1,14 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DataCollectorService.Models;
+using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
-using Models;
-using Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Processors
+namespace DataCollectorService.Processors
 {
     public class PressureProcessor : IMetricProcessor
     {
@@ -25,7 +19,8 @@ namespace Processors
         {
             if (patient.MetricIntervals["Pressure"] >= _intervalSeconds.PressureIntervalSeconds)
             {
-                var (systolic, diastolic) = _generator.GeneratePressure();
+                var systolic = _generator.GenerateSystolicPressure();
+                var diastolic = _generator.GenerateDiastolicPressure();
                 patient.SysPressure.Value = systolic;
                 patient.DiasPressure.Value = diastolic;
                 patient.SysPressure.LastUpdate = DateTime.UtcNow;

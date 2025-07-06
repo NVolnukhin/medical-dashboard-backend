@@ -1,15 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using Models;
+﻿using DataCollectorService.Kafka;
+using DataCollectorService.Models;
+using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
-using Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Kafka;
 
-namespace Processors
+namespace DataCollectorService.Processors
 {
     public class BMIProcessor : IMetricProcessor
     {

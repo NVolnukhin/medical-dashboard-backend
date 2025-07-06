@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Models;
-using Microsoft.Extensions.Logging;
-using Services;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DataCollectorService.Models;
 
-namespace Processors
+namespace DataCollectorService.Processors
 {
     public interface IMetricProcessor
     {

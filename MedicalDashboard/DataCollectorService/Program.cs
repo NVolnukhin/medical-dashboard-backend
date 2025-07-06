@@ -1,11 +1,7 @@
-﻿using Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
+﻿using DataCollectorService.Processors;
+using DataCollectorService.Services;
+using DataCollectorService.Worker;
 using Microsoft.Extensions.Options;
-using Models;
-using Processors;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -24,6 +20,8 @@ builder.Services.AddSingleton<IMetricProcessor, SaturationProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, TemperatureProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, RespirationProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, PressureProcessor>();
+builder.Services.AddSingleton<IMetricProcessor, SystolicPressureProcessor>();
+builder.Services.AddSingleton<IMetricProcessor, DiastolicPressureProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, HemoglobinProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, WeightProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, BMIProcessor>();

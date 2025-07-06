@@ -1,15 +1,9 @@
-﻿using Confluent.Kafka;
-using System;
-using Models;
-using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
+using Confluent.Kafka;
+using DataCollectorService.Models;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.Json;
 
-namespace Kafka
+namespace DataCollectorService.Kafka
 {
     public class KafkaService : IKafkaService, IDisposable
     {

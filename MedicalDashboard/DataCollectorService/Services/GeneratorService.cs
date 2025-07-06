@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Models;
-namespace Services
+﻿namespace DataCollectorService.Services
 {
     public class GeneratorService : IGeneratorService
     {

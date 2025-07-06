@@ -1,4 +1,4 @@
-﻿namespace Kafka
+﻿namespace DataCollectorService.Kafka
 {
     public class KafkaConfig
     {
