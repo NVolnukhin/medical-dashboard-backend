@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Models;
-namespace Services
+﻿namespace DataCollectorService.Services
 {
     public class GeneratorService : IGeneratorService
     {
@@ -15,32 +13,6 @@ namespace Services
         public GeneratorService(ILogger<GeneratorService> logger)
         {
             _logger = logger;
-        }
-
-        public MedicalIndicator Generate(Patient patient, MedicalIndicator previous)
-        {
-            try
-            {
-                return new MedicalIndicator
-                {
-                    Timestamp = DateTime.UtcNow,
-                    HeartRate = GenerateHeartRate(previous?.HeartRate),
-                    Saturation = GenerateSaturation(previous?.Saturation),
-                    Temperature = GenerateTemperature(previous?.Temperature),
-                    RespirationRate = GenerateRespiration(previous?.RespirationRate),
-                    SystolicPressure = GeneratePressure().systolic,
-                    DiastolicPressure = GeneratePressure().diastolic,
-                    Hemoglobin = GenerateHemoglobin(previous?.Hemoglobin),
-                    Weight = GenerateWeight(previous?.Weight, patient.BaseWeight),
-                    BMI = GenerateBMI(previous?.BMI, patient.BaseWeight, patient.Height),
-                    Cholesterol = GenerateCholesterol(previous?.Cholesterol)
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка считывания показателей");
-                return previous ?? new MedicalIndicator();
-            }
         }
 
         public double GenerateHeartRate(double? previous)
@@ -99,26 +71,47 @@ namespace Services
             }
         }
 
-        public (double systolic, double diastolic) GeneratePressure()
+        public double GenerateSystolicPressure()
         {
             try
             {
                 if (_random.NextDouble() > 0.07)
                 {
                     return (
-                        _random.Next(110, 130), // Норма: 110-129/70-84
-                        _random.Next(70, 85)
+                        _random.Next(110, 130) // Норма: 110-129
                     );
                 }
-
-                return _random.NextDouble() > 0.5  // Кризисные значения
-                    ? (_random.Next(140, 200), _random.Next(90, 130)) // Гипертония
-                    : (_random.Next(80, 100), _random.Next(50, 65));  // Гипотония
+                else
+                {
+                    return (_random.Next(75, 109));
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка считывания давления");
-                return (120, 80);
+                _logger.LogError(ex, "Ошибка считывания систолического давления");
+                return 120;
+            }
+        }
+
+        public double GenerateDiastolicPressure()
+        {
+            try
+            {
+                if (_random.NextDouble() > 0.07)
+                {
+                    return (
+                        _random.Next(75, 109) // Норма: 70-84
+                    );
+                }
+                else
+                {
+                    return (_random.Next(45, 74));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка считывания диастолического давления");
+                return 120;
             }
         }
 
@@ -126,7 +119,15 @@ namespace Services
         {
             try
             {
-                double baseValue = previous ?? baseWeight;
+                double baseValue;
+                if (previous == null || previous == 0)
+                {
+                    baseValue = baseWeight;
+                }
+                else
+                {
+                    baseValue = previous.Value;
+                }
                 if (DateTime.Now.Hour > 18)
                 {
                     baseValue += 0.5;  // Вечером вес выше

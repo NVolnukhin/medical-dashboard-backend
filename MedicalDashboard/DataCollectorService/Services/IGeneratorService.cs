@@ -1,18 +1,11 @@
-﻿using Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Services
+﻿namespace DataCollectorService.Services
 {
     public interface IGeneratorService
     {
-        MedicalIndicator Generate(Patient patient, MedicalIndicator previous);
         double GenerateHeartRate(double? previous);
         double GenerateSaturation(double? previous);
-        (double systolic, double diastolic) GeneratePressure();
+        double GenerateSystolicPressure();
+        double GenerateDiastolicPressure();
         double GenerateWeight(double? previous, double baseWeight);
         double GenerateBMI(double? previous, double baseWeight, double height);
         double GenerateTemperature(double? previous);
