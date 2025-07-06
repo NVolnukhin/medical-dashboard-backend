@@ -253,11 +253,11 @@
       }
     },
     {
-      "UpstreamPathTemplate": "/alerts",
+      "UpstreamPathTemplate": "/patient-alerts",
       "UpstreamHttpMethod": [
         "GET"
       ],
-      "DownstreamPathTemplate": "/api/alerts",
+      "DownstreamPathTemplate": "/api/patient-alerts",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -271,11 +271,11 @@
       }
     },
     {
-      "UpstreamPathTemplate": "/alerts/{id}",
+      "UpstreamPathTemplate": "/patient-alerts/{id}",
       "UpstreamHttpMethod": [
         "GET"
       ],
-      "DownstreamPathTemplate": "/api/alerts/{id}",
+      "DownstreamPathTemplate": "/api/patient-alerts/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -289,11 +289,11 @@
       }
     },
     {
-      "UpstreamPathTemplate": "/alerts/{id}/ack",
+      "UpstreamPathTemplate": "/patient-alerts/{id}/ack",
       "UpstreamHttpMethod": [
         "POST"
       ],
-      "DownstreamPathTemplate": "/api/alerts/{id}/ack",
+      "DownstreamPathTemplate": "/api/patient-alerts/{id}/ack",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -307,11 +307,11 @@
       }
     },
     {
-      "UpstreamPathTemplate": "/alerts/{id}",
+      "UpstreamPathTemplate": "/patient-alerts/{id}",
       "UpstreamHttpMethod": [
         "DELETE"
       ],
-      "DownstreamPathTemplate": "/api/alerts/{id}",
+      "DownstreamPathTemplate": "/api/patient-alerts/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
