@@ -1,4 +1,3 @@
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using NotificationService.Data.Models;
 using NotificationService.Enums;
@@ -24,6 +23,8 @@ public class PatientAlertMessageHandler : IMessageHandler<PatientAlertMessage>
     public async Task HandleAsync(PatientAlertMessage message, CancellationToken cancellationToken)
     {
         _logger.LogInfo($"Обработка сообщения для пациента: {message.PatientName} ({message.PatientId})");
+        _logger.LogInfo($"Тип алерта: {message.AlertType}");
+        _logger.LogInfo($"Индикатор: {message.Indicator}");
 
         var messageBody = JsonSerializer.Serialize(message);
         _logger.LogInfo($"Сериализованное сообщение: {messageBody}");
@@ -36,6 +37,8 @@ public class PatientAlertMessageHandler : IMessageHandler<PatientAlertMessage>
             Type = NotificationType.WebPush
         };
 
+        _logger.LogInfo($"Создан запрос на уведомление типа {notificationRequest.Type}");
         await _notificationService.SendNotificationAsync(notificationRequest, cancellationToken);
+        _logger.LogSuccess($"Уведомление успешно обработано для пациента {message.PatientId}");
     }
 }

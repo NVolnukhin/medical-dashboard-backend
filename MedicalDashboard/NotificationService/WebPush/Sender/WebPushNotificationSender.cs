@@ -21,16 +21,17 @@ public class WebPushNotificationSender : INotificationSender
 
     public async Task SendAsync(string recipient, string subject, string body, CancellationToken cancellationToken = default)
     {
-        _logger.LogInfo("Попытка отправки Web Push уведомления через SignalR.");
+        _logger.LogInfo($"Попытка отправки Web Push уведомления через SignalR.");
+        _logger.LogInfo($"Размер сообщения: {body?.Length ?? 0} символов");
 
         try
         {
             await _hubContext.Clients.All.SendAsync("ReceiveAlert", body, cancellationToken);
-            _logger.LogInfo("Web Push уведомление успешно отправлено всем клиентам.");
+            _logger.LogSuccess($"Web Push уведомление успешно отправлено всем клиентам через SignalR");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при отправке Web Push уведомления через SignalR.");
+            _logger.LogFailure("Ошибка при отправке Web Push уведомления через SignalR", ex);
             throw;
         }
     }
