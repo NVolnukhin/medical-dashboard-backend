@@ -95,6 +95,7 @@ app.UseAuthorization();
 app.UseWebSockets();
 
 app.UseMiddleware<SignalRProxyMiddleware>();
+app.UseMiddleware<NotificationSignalRProxyMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerForOcelotUI(opt =>
