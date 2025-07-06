@@ -2,7 +2,7 @@
 {
     public class Patient
     {
-        public Guid Id { get; } = Guid.NewGuid();
+        public Guid Id { get; set;  } = Guid.NewGuid();
         public int Age { get; set; }
         public Dictionary<string, int> MetricIntervals = new Dictionary<string, int>();
         public string? Sex { get; set; }
