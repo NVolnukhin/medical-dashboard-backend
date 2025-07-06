@@ -64,8 +64,18 @@ const connection = new signalR.HubConnectionBuilder()
 ```
 
 ```csharp
+// Для получения метрик конкретного пациента в реальном времени
 const string hubUrl = "http://localhost:7168/hubs/metrics";
 var patientId = Guid.Parse("dd944c9e-1a0a-4b09-9c3a-7c5dc0791001");
+var connection = new HubConnectionBuilder()
+    .WithUrl(hubUrl)
+    .WithAutomaticReconnect()
+    .Build();
+```
+
+```csharp
+// Для получения алертов в реальном времени
+const string hubUrl = "http://localhost:7168/alerts";
 var connection = new HubConnectionBuilder()
     .WithUrl(hubUrl)
     .WithAutomaticReconnect()
