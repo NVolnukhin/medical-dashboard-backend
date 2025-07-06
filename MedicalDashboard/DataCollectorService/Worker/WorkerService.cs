@@ -42,8 +42,8 @@ namespace DataCollectorService.Worker
         private void InitPatients()
         {
             // Временно добавила инициализацию отдельных пациентов
-            _patients.Add(new Patient { Name = "Петрова Анна Михайловна", BaseWeight = 60.0, Height = 1.52 });
-            _patients.Add(new Patient { Name = "Фролова Ольга Анатольевна", BaseWeight = 78.0, Height = 1.84 });
+            _patients.Add(new Patient { Id = Guid.Parse("dd944c9e-1a0a-4b09-9c3a-7c5dc0791001"), Name = "Петрова Анна Михайловна", BaseWeight = 60.0, Height = 1.52 });
+            _patients.Add(new Patient { Id = Guid.Parse("967c6ce2-fb7e-4355-82a5-a1994b8f36d7"), Name = "Фролова Ольга Анатольевна", BaseWeight = 78.0, Height = 1.84 });
 
             foreach (var patient in _patients) 
             {
@@ -70,7 +70,7 @@ namespace DataCollectorService.Worker
 
                         foreach (var processor in _metricProcessors) 
                         {
-                            processor.Generate(patient);
+                            await processor.Generate(patient);
                             processor.Log(patient, _logger);
                         }
                     }
