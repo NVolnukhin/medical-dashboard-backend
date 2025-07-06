@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace Processors
 {
-    public class WeightProcessor : IMetricProcessor
+    public class DiastolicPressureProcessor : IMetricProcessor
     {
         private readonly IGeneratorService _generator;
         private readonly MetricGenerationConfig _intervalSeconds;
         private readonly IKafkaService _kafkaService;
 
-        public WeightProcessor(IGeneratorService generator, 
+        public DiastolicPressureProcessor(IGeneratorService generator,
             IOptions<MetricGenerationConfig> intervalSeconds,
             IKafkaService kafkaService)
         {
@@ -28,23 +28,21 @@ namespace Processors
 
         public void Generate(Patient patient)
         {
-            if (patient.MetricIntervals["Weight"] >= _intervalSeconds.WeightIntervalSeconds)
+            if (patient.MetricIntervals["DiasPressure"] >= _intervalSeconds.PressureIntervalSeconds)
             {
-                var newValue = _generator.GenerateWeight(
-                    patient.Weight.Value,
-                    patient.BaseWeight);
-                patient.Weight.Value = newValue;
+                var diastolic = _generator.GenerateDiastolicPressure();
+                patient.DiasPressure.Value = diastolic;
+                patient.DiasPressure.LastUpdate = DateTime.UtcNow;
+                patient.MetricIntervals["DiasPressure"] = 0;
 
-                patient.Weight.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Weight"] = 0;
-
-                _kafkaService.SendToKafka(patient, "Weight", newValue);
+                _kafkaService.SendToKafka(patient, "DiasPressure", diastolic);
             }
         }
 
         public void Log(Patient patient, ILogger logger)
         {
-            logger.LogInformation($"[{patient.Name}] Вес: {patient.Weight.Value} кг");
+            logger.LogInformation($"[{patient.Name}] Диастолическое давление: " +
+                $"{patient.DiasPressure.Value} мм рт.ст.");
         }
     }
 }

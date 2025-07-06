@@ -11,7 +11,8 @@ namespace Services
     {
         double GenerateHeartRate(double? previous);
         double GenerateSaturation(double? previous);
-        (double systolic, double diastolic) GeneratePressure();
+        double GenerateSystolicPressure();
+        double GenerateDiastolicPressure();
         double GenerateWeight(double? previous, double baseWeight);
         double GenerateBMI(double? previous, double baseWeight, double height);
         double GenerateTemperature(double? previous);
