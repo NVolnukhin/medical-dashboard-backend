@@ -72,7 +72,7 @@ var connection = new HubConnectionBuilder()
     .Build();
 ```
 
-## 🔧 Ocelot Gateway Конфигурации
+## Ocelot Gateway Конфигурации
 
 ### development
 - **AuthService**: `localhost:5251`
