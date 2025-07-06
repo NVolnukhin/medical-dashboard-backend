@@ -10,5 +10,4 @@ public class AlertDto
     public DateTime? AcknowledgedAt { get; set; }
     public Guid? AcknowledgedBy { get; set; }
     public bool IsProcessed { get; set; }
-    public string PatientName { get; set; } = string.Empty;
 }
