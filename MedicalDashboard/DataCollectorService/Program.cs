@@ -1,6 +1,7 @@
 ﻿using DataCollectorService.Processors;
 using DataCollectorService.Services;
 using DataCollectorService.Worker;
+using DataCollectorService.Kafka;
 using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -10,7 +11,11 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 builder.Services.Configure<MetricGenerationConfig>(
     builder.Configuration.GetSection("MetricGeneration"));
 
+builder.Services.Configure<KafkaConfig>(
+    builder.Configuration.GetSection("Kafka"));
+
 builder.Services.AddSingleton<IGeneratorService, GeneratorService>();
+builder.Services.AddSingleton<IKafkaService, KafkaService>();
 
 builder.Services.AddSingleton<MetricGenerationConfig>(sp =>
     sp.GetRequiredService<IOptions<MetricGenerationConfig>>().Value);
