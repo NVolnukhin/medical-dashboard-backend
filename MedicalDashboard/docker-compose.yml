@@ -59,6 +59,48 @@ services:
       - shared_net_test
       - kafka_kafka-network
 
+  data-analysis-service:
+    build:
+      context: .
+      dockerfile: DataAnalysisService/Dockerfile
+    ports:
+      - "5260:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=${ENV:-Production}
+      - KafkaSettings__BootstrapServers=kafka:29092
+      - KafkaSettings__GroupId=data-analysis-service
+      - KafkaSettings__AutoOffsetReset=Earliest
+      - KafkaSettings__Topics__RawMetrics=md-raw-information
+      - KafkaSettings__Topics__Alerts=md-alerts
+      - RedisSettings__ConnectionString=redis:6379
+      - RedisSettings__Database=0
+      - ConnectionStrings__DefaultConnection=Host=dpg-d1k4c22dbo4c73f1bjo0-a.frankfurt-postgres.render.com;Port=5432;Database=medicaldashboarddb;Username=medicaldashboarddb_user;Password=QwqS9LfOgF3jvYLqAxGaQtsR7y5enMLY
+      - AnalysisSettings__AlertThresholdPercent=5.0
+      - AnalysisSettings__WarningThresholdPercent=3.0
+      - AnalysisSettings__WarningBoundaryPercent=3.0
+      - AnalysisSettings__WarningTimeoutMinutes=10
+      - AnalysisSettings__AlertTimeoutMinutes=5
+    depends_on:
+      - redis
+    networks:
+      - shared_net_test
+      - kafka_kafka-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: medical-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - shared_net_test
+
+volumes:
+  redis_data:
+
 networks:
   shared_net_test:
     name: shared_net_test
