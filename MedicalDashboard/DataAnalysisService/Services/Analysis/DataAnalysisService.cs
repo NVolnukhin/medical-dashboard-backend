@@ -148,6 +148,7 @@ public class DataAnalysisService : IDataAnalysisService
             MetricType.Weight => _metricsConfig.Weight,
             MetricType.Hemoglobin => _metricsConfig.Hemoglobin,
             MetricType.Cholesterol => _metricsConfig.Cholesterol,
+            MetricType.BMI => _metricsConfig.BMI,
             _ => null
         };
     }
