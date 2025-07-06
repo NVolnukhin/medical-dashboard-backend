@@ -25,12 +25,8 @@ public class PatientAlertMessageHandler : IMessageHandler<PatientAlertMessage>
     {
         _logger.LogInfo($"Обработка сообщения для пациента: {message.PatientName} ({message.PatientId})");
 
-        var options = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        
-        var messageBody = JsonSerializer.Serialize(message, options);
+        var messageBody = JsonSerializer.Serialize(message);
+        _logger.LogInfo($"Сериализованное сообщение: {messageBody}");
 
         var notificationRequest = new NotificationRequest
         {
