@@ -141,8 +141,7 @@ public class AlertService : IAlertService
             CreatedAt = alert.CreatedAt,
             AcknowledgedAt = alert.AcknowledgedAt,
             AcknowledgedBy = alert.AcknowledgedBy,
-            IsProcessed = alert.IsProcessed,
-            PatientName = alert.Patient != null ? $"{alert.Patient.FirstName} {alert.Patient.LastName}" : "Unknown"
+            IsProcessed = alert.IsProcessed
         };
     }
 } 
