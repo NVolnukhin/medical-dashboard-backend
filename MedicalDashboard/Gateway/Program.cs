@@ -97,6 +97,23 @@ app.UseWebSockets();
 app.UseMiddleware<SignalRProxyMiddleware>();
 app.UseMiddleware<NotificationSignalRProxyMiddleware>();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == HttpMethods.Options)
+    {
+        context.Response.StatusCode = 200;
+        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        await context.Response.WriteAsync("OK");
+    }
+    else
+    {
+        await next();
+    }
+});
+
+
 app.UseSwagger();
 app.UseSwaggerForOcelotUI(opt =>
 {
