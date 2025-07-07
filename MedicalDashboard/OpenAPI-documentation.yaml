@@ -996,6 +996,119 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
 
+  # ========================================
+  # DEAD LETTER ENDPOINTS
+  # ========================================
+
+  /dead-letters:
+    get:
+      tags:
+        - DeadLetter
+      summary: Получить все сообщения Dead Letter
+      description: Получение списка всех сообщений в очереди Dead Letter
+      operationId: getAllDeadLetters
+      responses:
+        '200':
+          description: Список сообщений Dead Letter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeadLetterMessage'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+    options:
+      tags:
+        - DeadLetter
+      summary: Preflight OPTIONS for /dead-letters
+      responses:
+        '200':
+          description: Preflight response
+
+  /dead-letters/unprocessed:
+    get:
+      tags:
+        - DeadLetter
+      summary: Получить необработанные сообщения Dead Letter
+      description: Получение списка необработанных сообщений в очереди Dead Letter
+      operationId: getUnprocessedDeadLetters
+      responses:
+        '200':
+          description: Список необработанных сообщений Dead Letter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeadLetterMessage'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+    options:
+      tags:
+        - DeadLetter
+      summary: Preflight OPTIONS for /dead-letters/unprocessed
+      responses:
+        '200':
+          description: Preflight response
+
+  /dead-letters/{id}/process:
+    post:
+      tags:
+        - DeadLetter
+      summary: Отметить сообщение Dead Letter как обработанное
+      description: Отметить сообщение в очереди Dead Letter как обработанное
+      operationId: processDeadLetter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор сообщения Dead Letter
+      responses:
+        '200':
+          description: Сообщение успешно обработано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeadLetterMessage'
+        '404':
+          description: Сообщение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+    options:
+      tags:
+        - DeadLetter
+      summary: Preflight OPTIONS for /dead-letters/{id}/process
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Preflight response
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1501,6 +1614,62 @@ components:
           description: HTTP статус код
           example: 400
 
+    DeadLetterMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сообщения Dead Letter
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        messageId:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сообщения в очереди
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        body:
+          type: string
+          description: Тело сообщения
+          example: "{\"patientId\":\"123e4567-e89b-12d3-a456-426614174000\",\"type\":\"heart_rate\",\"value\":75.0,\"timestamp\":\"2024-01-15T10:30:00Z\"}"
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Заголовки сообщения
+          example:
+            Content-Type: "application/json"
+            X-Correlation-Id: "1234567890"
+        deliveryCount:
+          type: integer
+          description: Количество попыток доставки
+          example: 1
+        enqueuedAt:
+          type: string
+          format: date-time
+          description: Время поступления в очередь
+          example: "2024-01-15T10:30:00Z"
+        lockedUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время разблокировки сообщения
+          example: "2024-01-15T10:30:00Z"
+        deadLetterReason:
+          type: string
+          description: Причина Dead Letter
+          example: "MaxDeliveryCountReached"
+        errorMessage:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке при доставке
+          example: "Failed to process message"
+        lastDeliveryAttempt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время последней попытки доставки
+          example: "2024-01-15T10:30:00Z"
+
 tags:
   - name: Authentication
     description: Операции аутентификации и авторизации
@@ -1516,3 +1685,5 @@ tags:
     description: Real-time подключения через WebSocket
   - name: Notifications
     description: Отправка уведомлений
+  - name: DeadLetter
+    description: Обработка сообщений Dead Letter

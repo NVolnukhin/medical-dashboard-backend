@@ -39,6 +39,11 @@
 - `GET /notifications/types` - Получить типы уведомлений
 - `GET /notifications/priorities` - Получить приоритеты уведомлений
 
+### Dead Letter
+- `GET /dead-letters` - Список всех сообщений Dead Letter
+- `GET /dead-letters/unprocessed` - Список необработанных сообщений Dead Letter
+- `POST /dead-letters/{id}/process` - Отметить сообщение как обработанное
+
 ## SignalR
 
 ### WebSocket эндпоинты
