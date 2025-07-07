@@ -23,7 +23,12 @@ public class DashboardDbContext : DbContext
             entity.Property(e => e.MiddleName).HasMaxLength(100);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.DoctorId).IsRequired();
-            entity.Property(e => e.BirthDate).IsRequired();
+            entity.Property(e => e.BirthDate)
+                .IsRequired()
+                .HasConversion(
+                    v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+                    v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
+                );
             entity.Property(e => e.Sex).IsRequired().HasMaxLength(1);
             entity.Property(e => e.Height);
             entity.Property(e => e.Ward);
