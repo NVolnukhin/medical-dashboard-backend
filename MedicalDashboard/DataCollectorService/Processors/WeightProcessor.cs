@@ -1,44 +1,37 @@
 ﻿using DataCollectorService.Kafka;
 using DataCollectorService.Models;
+using DataCollectorService.Processors;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Reflection.Emit;
 
-namespace DataCollectorService.Processors
+public class WeightProcessor : MetricProcessorBase
 {
-    public class WeightProcessor : IMetricProcessor
+    private readonly MetricGenerationConfig _config;
+
+    public WeightProcessor(IGeneratorService generator, 
+        IKafkaService kafkaService,
+        IOptions<MetricGenerationConfig> config, 
+        ILogger<WeightProcessor> logger)
+        : base(generator, kafkaService, logger)
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
-
-        public WeightProcessor(IGeneratorService generator, 
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
-        {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
-        }
-
-        public async Task Generate(Patient patient)
-        {
-            if (patient.MetricIntervals["Weight"] >= _intervalSeconds.WeightIntervalSeconds)
-            {
-                var newValue = _generator.GenerateWeight(
-                    patient.Weight.Value,
-                    patient.BaseWeight);
-                patient.Weight.Value = newValue;
-
-                patient.Weight.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Weight"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "Weight", newValue);
-            }
-        }
-
-        public void Log(Patient patient, ILogger logger)
-        {
-            logger.LogInformation($"[{patient.Name}] Вес: {patient.Weight.Value} кг");
-        }
+        _config = config.Value ?? throw new ArgumentNullException(nameof(config));
     }
+
+    protected override MetricType GetMetricType() => MetricType.Weight; // тип метрики
+    protected override int GetIntervalSeconds() => _config.WeightIntervalSeconds; // интервал из конфига
+    protected override async Task<double> GenerateMetricValue(Patient patient)
+    {
+        return await Task.FromResult(_generator.GenerateWeight(patient.Weight.Value, patient.BaseWeight)); // генерация 
+    }
+
+    protected override void UpdatePatientMetric(Patient patient, double value)
+    {
+        patient.Weight.Value = value; // обновление значения
+        patient.Weight.LastUpdate = DateTime.UtcNow; // рбновление времени
+    }
+
+    protected override double GetMetricValue(Patient patient) => patient.Weight.Value; //  текущее значение
+    protected override string GetUnit() => "кг"; // ед. измер
 }

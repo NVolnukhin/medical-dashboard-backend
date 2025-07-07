@@ -3,37 +3,36 @@ using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
 using Shared;
-using System.Reflection.Emit;
 
 namespace DataCollectorService.Processors
 {
-    public class HemoglobinProcessor : MetricProcessorBase
+    public class PulseProcessor : MetricProcessorBase
     {
         private readonly MetricGenerationConfig _config;
 
-        public HemoglobinProcessor(IGeneratorService generator,
+        public PulseProcessor(IGeneratorService generator,
             IKafkaService kafkaService,
             IOptions<MetricGenerationConfig> config,
-            ILogger<HemoglobinProcessor> logger)
+            ILogger<PulseProcessor> logger)
             : base(generator, kafkaService, logger)
         {
             _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        protected override MetricType GetMetricType() => MetricType.Hemoglobin;
-        protected override int GetIntervalSeconds() => _config.HemoglobinIntervalSeconds;
+        protected override MetricType GetMetricType() => MetricType.Pulse;
+        protected override int GetIntervalSeconds() => _config.PulseIntervalSeconds;
         protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            return await Task.FromResult(_generator.GenerateHemoglobin(patient.Hemoglobin.Value));
+            return await Task.FromResult(_generator.GeneratePulse(patient.Pulse.Value));
         }
 
         protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            patient.Hemoglobin.Value = value;
-            patient.Hemoglobin.LastUpdate = DateTime.UtcNow;
+            patient.Pulse.Value = value;
+            patient.Pulse.LastUpdate = DateTime.UtcNow;
         }
 
-        protected override double GetMetricValue(Patient patient) => patient.Hemoglobin.Value;
-        protected override string GetUnit() => "г/л";
+        protected override double GetMetricValue(Patient patient) => patient.Pulse.Value;
+        protected override string GetUnit() => "уд./мин";
     }
 }

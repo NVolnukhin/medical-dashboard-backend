@@ -2,7 +2,7 @@
 {
     public class MetricGenerationConfig
     {
-        public int HeartRateIntervalSeconds { get; set; } = 30;
+        public int PulseIntervalSeconds { get; set; } = 30;
         public int SaturationIntervalSeconds { get; set; } = 30;
         public int BmiIntervalSeconds { get; set; } = 30;
         public int TemperatureIntervalSeconds { get; set; } = 60;

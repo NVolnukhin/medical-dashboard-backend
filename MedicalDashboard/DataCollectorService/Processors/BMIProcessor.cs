@@ -2,41 +2,38 @@
 using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Reflection.Emit;
 
 namespace DataCollectorService.Processors
 {
-    public class BMIProcessor : IMetricProcessor
+    public class BMIProcessor : MetricProcessorBase
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
+        private readonly MetricGenerationConfig _config;
 
-        public BMIProcessor(IGeneratorService generator, 
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
+        public BMIProcessor(IGeneratorService generator,
+            IKafkaService kafkaService,
+            IOptions<MetricGenerationConfig> config,
+            ILogger<BMIProcessor> logger)
+            : base(generator, kafkaService, logger)
         {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
+            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task Generate(Patient patient)
+        protected override MetricType GetMetricType() => MetricType.BMI;
+        protected override int GetIntervalSeconds() => _config.BmiIntervalSeconds;
+        protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            if (patient.MetricIntervals["BMI"] >= _intervalSeconds.BmiIntervalSeconds)
-            {
-                var newValue = _generator.GenerateBMI(patient.BMI.Value, patient.BaseWeight, patient.Height);
-                patient.BMI.Value = newValue;
-                patient.BMI.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["BMI"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "BMI", newValue);
-            }
+            return await Task.FromResult(_generator.GenerateBMI(patient.BMI.Value, patient.BaseWeight, patient.Height));
         }
 
-
-        public void Log(Patient patient, ILogger logger)
+        protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            logger.LogInformation($"[{patient.Name}] Индекс массы тела: {Math.Round(patient.BMI.Value, 2)}");
+            patient.BMI.Value = value;
+            patient.BMI.LastUpdate = DateTime.UtcNow;
         }
+
+        protected override double GetMetricValue(Patient patient) => patient.BMI.Value;
+        protected override string GetUnit() => "кг/м²";
     }
 }

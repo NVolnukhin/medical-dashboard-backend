@@ -2,41 +2,37 @@
 using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
 
 namespace DataCollectorService.Processors
 {
-    public class DiastolicPressureProcessor : IMetricProcessor
+    public class DiastolicPressureProcessor : MetricProcessorBase
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
+        private readonly MetricGenerationConfig _config;
 
         public DiastolicPressureProcessor(IGeneratorService generator,
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
+            IKafkaService kafkaService,
+            IOptions<MetricGenerationConfig> config,
+            ILogger<DiastolicPressureProcessor> logger)
+            : base(generator, kafkaService, logger)
         {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
+            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task Generate(Patient patient)
+        protected override MetricType GetMetricType() => MetricType.DiastolicPressure;
+        protected override int GetIntervalSeconds() => _config.PressureIntervalSeconds;
+        protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            if (patient.MetricIntervals["DiasPressure"] >= _intervalSeconds.PressureIntervalSeconds)
-            {
-                var diastolic = _generator.GenerateDiastolicPressure();
-                patient.DiasPressure.Value = diastolic;
-                patient.DiasPressure.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["DiasPressure"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "DiasPressure", diastolic);
-            }
+            return await Task.FromResult(_generator.GenerateDiastolicPressure());
         }
 
-        public void Log(Patient patient, ILogger logger)
+        protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            logger.LogInformation($"[{patient.Name}] Диастолическое давление: " +
-                $"{patient.DiasPressure.Value} мм рт.ст.");
+            patient.DiastolicPressure.Value = value;
+            patient.DiastolicPressure.LastUpdate = DateTime.UtcNow;
         }
+
+        protected override double GetMetricValue(Patient patient) => patient.DiastolicPressure.Value;
+        protected override string GetUnit() => "мм рт.ст.";
     }
 }

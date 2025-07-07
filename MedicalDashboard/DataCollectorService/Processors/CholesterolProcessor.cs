@@ -2,40 +2,38 @@
 using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Reflection.Emit;
 
 namespace DataCollectorService.Processors
 {
-    public class CholesterolProcessor : IMetricProcessor
+    public class CholesterolProcessor : MetricProcessorBase
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
+        private readonly MetricGenerationConfig _config;
 
-        public CholesterolProcessor(IGeneratorService generator, 
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
+        public CholesterolProcessor(IGeneratorService generator,
+            IKafkaService kafkaService,
+            IOptions<MetricGenerationConfig> config,
+            ILogger<CholesterolProcessor> logger)
+            : base(generator, kafkaService, logger)
         {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
+            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task Generate(Patient patient)
+        protected override MetricType GetMetricType() => MetricType.Cholesterol;
+        protected override int GetIntervalSeconds() => _config.CholesterolIntervalSeconds;
+        protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            if (patient.MetricIntervals["Cholesterol"] >= _intervalSeconds.CholesterolIntervalSeconds)
-            {
-                var newValue = _generator.GenerateCholesterol(patient.Cholesterol.Value);
-                patient.Cholesterol.Value = newValue;
-                patient.Cholesterol.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Cholesterol"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "Cholesterol", newValue);
-            }
+            return await Task.FromResult(_generator.GenerateCholesterol(patient.Cholesterol.Value));
         }
 
-        public void Log(Patient patient, ILogger logger)
+        protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            logger.LogInformation($"[{patient.Name}] Холестерин: {patient.Cholesterol.Value} ммоль/л");
+            patient.Cholesterol.Value = value;
+            patient.Cholesterol.LastUpdate = DateTime.UtcNow;
         }
+
+        protected override double GetMetricValue(Patient patient) => patient.Cholesterol.Value;
+        protected override string GetUnit() => "ммоль/л";
     }
 }
