@@ -2,7 +2,7 @@
   "Routes": [
     {
       "UpstreamPathTemplate": "/notifications/notify",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/notifications/notify",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -18,7 +18,7 @@
     },
     {
       "UpstreamPathTemplate": "/notifications/types",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/notifications/types",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -34,7 +34,7 @@
     },
     {
       "UpstreamPathTemplate": "/notifications/priorities",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/notifications/priorities",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

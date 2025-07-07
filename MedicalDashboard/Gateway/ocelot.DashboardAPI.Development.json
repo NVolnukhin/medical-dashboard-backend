@@ -2,7 +2,7 @@
   "Routes": [
     {
       "UpstreamPathTemplate": "/patients",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/patients",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -18,7 +18,7 @@
     },
     {
       "UpstreamPathTemplate": "/patients/{id}",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/patients/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -82,7 +82,7 @@
     },
     {
       "UpstreamPathTemplate": "/metrics/{patientId}",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/metrics/{patientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -98,7 +98,7 @@
     },
     {
       "UpstreamPathTemplate": "/metrics/latest/{patientId}",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/metrics/latest/{patientId}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -114,7 +114,7 @@
     },
     {
       "UpstreamPathTemplate": "/metrics",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/metrics",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -130,7 +130,7 @@
     },
     {
       "UpstreamPathTemplate": "/patient-alerts",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/patient-alerts",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -146,7 +146,7 @@
     },
     {
       "UpstreamPathTemplate": "/patient-alerts/{id}",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/patient-alerts/{id}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -162,7 +162,7 @@
     },
     {
       "UpstreamPathTemplate": "/patient-alerts/{id}/ack",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/patient-alerts/{id}/ack",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

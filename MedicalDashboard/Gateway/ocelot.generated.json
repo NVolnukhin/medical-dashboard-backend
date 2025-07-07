@@ -3,7 +3,8 @@
     {
       "UpstreamPathTemplate": "/identity/login",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/identity/login",
       "DownstreamScheme": "http",
@@ -21,7 +22,8 @@
     {
       "UpstreamPathTemplate": "/identity/register",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/identity/register",
       "DownstreamScheme": "http",
@@ -39,7 +41,8 @@
     {
       "UpstreamPathTemplate": "/identity/validate",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/identity/validate",
       "DownstreamScheme": "http",
@@ -57,7 +60,8 @@
     {
       "UpstreamPathTemplate": "/identity/update-password",
       "UpstreamHttpMethod": [
-        "PUT"
+        "PUT",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/identity/update-password",
       "DownstreamScheme": "http",
@@ -75,7 +79,8 @@
     {
       "UpstreamPathTemplate": "/password-recovery/request",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/password-recovery/request",
       "DownstreamScheme": "http",
@@ -93,7 +98,8 @@
     {
       "UpstreamPathTemplate": "/password-recovery/confirm",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/password-recovery/confirm",
       "DownstreamScheme": "http",
@@ -111,7 +117,8 @@
     {
       "UpstreamPathTemplate": "/notifications/notify",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/notifications/notify",
       "DownstreamScheme": "http",
@@ -129,7 +136,8 @@
     {
       "UpstreamPathTemplate": "/notifications/types",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/notifications/types",
       "DownstreamScheme": "http",
@@ -147,7 +155,8 @@
     {
       "UpstreamPathTemplate": "/notifications/priorities",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/notifications/priorities",
       "DownstreamScheme": "http",
@@ -165,7 +174,8 @@
     {
       "UpstreamPathTemplate": "/patients",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/patients",
       "DownstreamScheme": "http",
@@ -183,7 +193,8 @@
     {
       "UpstreamPathTemplate": "/patients/{id}",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/patients/{id}",
       "DownstreamScheme": "http",
@@ -255,7 +266,8 @@
     {
       "UpstreamPathTemplate": "/metrics/{patientId}",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/metrics/{patientId}",
       "DownstreamScheme": "http",
@@ -273,7 +285,8 @@
     {
       "UpstreamPathTemplate": "/metrics/latest/{patientId}",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/metrics/latest/{patientId}",
       "DownstreamScheme": "http",
@@ -291,7 +304,8 @@
     {
       "UpstreamPathTemplate": "/metrics",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/metrics",
       "DownstreamScheme": "http",
@@ -309,7 +323,8 @@
     {
       "UpstreamPathTemplate": "/patient-alerts",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/patient-alerts",
       "DownstreamScheme": "http",
@@ -327,7 +342,8 @@
     {
       "UpstreamPathTemplate": "/patient-alerts/{id}",
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/patient-alerts/{id}",
       "DownstreamScheme": "http",
@@ -345,7 +361,8 @@
     {
       "UpstreamPathTemplate": "/patient-alerts/{id}/ack",
       "UpstreamHttpMethod": [
-        "POST"
+        "POST",
+        "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/patient-alerts/{id}/ack",
       "DownstreamScheme": "http",
