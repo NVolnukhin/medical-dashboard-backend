@@ -875,6 +875,29 @@ paths:
       responses:
         '200':
           description: SignalR response
+  /alerts:
+    get:
+      tags:
+        - SignalR
+      summary: SignalR Hub для алертов
+      description: |
+        WebSocket endpoint для real-time подключения к алертам пациентов.
+
+        ## Подключение
+        ```javascript
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/alerts")
+            .build();
+
+        await connection.start();
+        ```
+
+      operationId: signalRAlert
+      responses:
+        '101':
+          description: Switching Protocols - WebSocket upgrade
+        '200':
+          description: HTTP fallback response
 
   # ========================================
   # NOTIFICATION SERVICE ENDPOINTS
