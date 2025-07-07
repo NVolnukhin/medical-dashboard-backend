@@ -1108,15 +1108,10 @@ components:
     PasswordRecoveryConfirm:
       type: object
       required:
-        - email
         - token
         - newPassword
+        - confirmPassword
       properties:
-        email:
-          type: string
-          format: email
-          description: Email пользователя
-          example: "user@example.com"
         token:
           type: string
           description: Токен восстановления
@@ -1124,6 +1119,11 @@ components:
         newPassword:
           type: string
           description: Новый пароль
+          example: "newpassword123"
+          minLength: 6
+        confirmPassword:
+          type: string
+          description: Подтверждение пароля
           example: "newpassword123"
           minLength: 6
 
