@@ -5,7 +5,7 @@
     // Публичные методы (без авторизации)
     {
       "UpstreamPathTemplate": "/identity/login",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/identity/login",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -21,7 +21,7 @@
     },
     {
       "UpstreamPathTemplate": "/identity/register",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/identity/register",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -37,7 +37,7 @@
     },
     {
       "UpstreamPathTemplate": "/identity/validate",
-      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/identity/validate",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -55,7 +55,7 @@
     // Защищённые методы (требуют JWT)
     {
       "UpstreamPathTemplate": "/identity/update-password",
-      "UpstreamHttpMethod": [ "PUT" ],
+      "UpstreamHttpMethod": [ "PUT", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/identity/update-password",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -74,7 +74,7 @@
     // ----- PASSWORD RECOVERY CONTROLLER ----- //
     {
       "UpstreamPathTemplate": "/password-recovery/request",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/password-recovery/request",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -90,7 +90,7 @@
     },
     {
       "UpstreamPathTemplate": "/password-recovery/confirm",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/password-recovery/confirm",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
