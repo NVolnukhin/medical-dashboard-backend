@@ -13,8 +13,7 @@ builder.Configuration
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
-// Объединение ocelot.*.{ENV}.json файлов
-var ocelotFiles = Directory.GetFiles(builder.Environment.ContentRootPath, $"ocelot.*.{builder.Environment.EnvironmentName}.json", SearchOption.TopDirectoryOnly);
+var ocelotFiles = Directory.GetFiles(builder.Environment.ContentRootPath, $"ocelot.*.{builder.Environment.EnvironmentName}.json");
 var mergedConfig = new JObject();
 
 foreach (var file in ocelotFiles)
@@ -23,32 +22,21 @@ foreach (var file in ocelotFiles)
     foreach (var prop in json.Properties())
     {
         if (mergedConfig[prop.Name] == null)
-        {
             mergedConfig[prop.Name] = prop.Value;
-        }
         else if (mergedConfig[prop.Name] is JArray existingArray && prop.Value is JArray newArray)
-        {
             foreach (var item in newArray)
-            {
                 existingArray.Add(item);
-            }
-        }
         else
-        {
             mergedConfig[prop.Name] = prop.Value;
-        }
     }
 }
 
 var mergedFilePath = Path.Combine(builder.Environment.ContentRootPath, "ocelot.generated.json");
 File.WriteAllText(mergedFilePath, mergedConfig.ToString());
-
 builder.Configuration.AddJsonFile(mergedFilePath, optional: false, reloadOnChange: true);
 
 if (builder.Environment.IsDevelopment())
-{
     builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
-}
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -58,27 +46,26 @@ builder.Services.AddSwaggerForOcelot(builder.Configuration);
 builder.Services.AddOcelot(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Добавляем поддержку WebSocket
 builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", builder =>
-        builder.WithOrigins(
-                "http://localhost:3000",  // React/Next.js
-                "http://localhost:4200",  // Angular
-                "http://localhost:8080",  // Vue.js
-                "http://localhost:5000",  // Другие dev серверы
-                "http://localhost:5173",  // Vite
-                "http://localhost:3001",  // Дополнительные порты
-                "http://localhost:3002"
-            )
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials()); // Важно для WebSocket
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:8080",
+                "http://localhost:5000",
+                "http://localhost:5173",
+                "http://localhost:3001",
+                "http://localhost:3002")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
 });
 
-// Приложение
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -86,42 +73,40 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+// ===== CORS middleware для всех запросов (до next)
 app.Use(async (context, next) =>
 {
+    var origin = context.Request.Headers["Origin"].FirstOrDefault();
+    if (!string.IsNullOrEmpty(origin))
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
+    }
+
     if (context.Request.Method == HttpMethods.Options)
     {
-        var origin = context.Request.Headers["Origin"].FirstOrDefault() ?? "*";
-
         context.Response.StatusCode = 200;
-        context.Response.Headers.Add("Access-Control-Allow-Origin", origin);
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         await context.Response.WriteAsync("OK");
+        return; // НЕ вызываем next для preflight
     }
-    else
-    {
-        await next();
-    }
+
+    await next();
 });
 
+// ===== Обычный CORS policy (для fallback / WebSocket / SignalR)
+app.UseCors("CorsPolicy");
 
 app.UseRouting();
-app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Добавляем SignalR прокси middleware перед Ocelot
 app.UseWebSockets();
-
 app.UseMiddleware<SignalRProxyMiddleware>();
 app.UseMiddleware<NotificationSignalRProxyMiddleware>();
 
-
 app.UseSwagger();
-app.UseSwaggerForOcelotUI(opt =>
-{
-    opt.PathToSwaggerGenerator = "/swagger/docs";
-});
+app.UseSwaggerForOcelotUI(opt => opt.PathToSwaggerGenerator = "/swagger/docs");
 
 var option = new RewriteOptions();
 app.UseRewriter(option);
