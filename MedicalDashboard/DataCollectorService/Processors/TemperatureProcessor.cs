@@ -2,40 +2,38 @@
 using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Reflection.Emit;
 
 namespace DataCollectorService.Processors
 {
-    public class TemperatureProcessor : IMetricProcessor
+    public class TemperatureProcessor : MetricProcessorBase
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
+        private readonly MetricGenerationConfig _config;
 
-        public TemperatureProcessor(IGeneratorService generator, 
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
+        public TemperatureProcessor(IGeneratorService generator,
+            IKafkaService kafkaService,
+            IOptions<MetricGenerationConfig> config,
+            ILogger<TemperatureProcessor> logger)
+            : base(generator, kafkaService, logger)
         {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
+            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task Generate(Patient patient)
+        protected override MetricType GetMetricType() => MetricType.Temperature;
+        protected override int GetIntervalSeconds() => _config.TemperatureIntervalSeconds;
+        protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            if (patient.MetricIntervals["Temperature"] >= _intervalSeconds.TemperatureIntervalSeconds)
-            {
-                var newValue = _generator.GenerateTemperature(patient.Temperature.Value);
-                patient.Temperature.Value = newValue;
-                patient.Temperature.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Temperature"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "Temperature", newValue);
-            }
+            return await Task.FromResult(_generator.GenerateTemperature(patient.Temperature.Value));
         }
 
-        public void Log(Patient patient, ILogger logger)
+        protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            logger.LogInformation($"[{patient.Name}] Температура: {patient.Temperature.Value}°C");
+            patient.Temperature.Value = value;
+            patient.Temperature.LastUpdate = DateTime.UtcNow;
         }
+
+        protected override double GetMetricValue(Patient patient) => patient.Temperature.Value; 
+        protected override string GetUnit() => "°C"; 
     }
 }

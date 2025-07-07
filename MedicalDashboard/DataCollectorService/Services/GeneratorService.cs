@@ -15,7 +15,7 @@
             _logger = logger;
         }
 
-        public double GenerateHeartRate(double? previous)
+        public double GeneratePulse(double? previous)
         {
             try
             {

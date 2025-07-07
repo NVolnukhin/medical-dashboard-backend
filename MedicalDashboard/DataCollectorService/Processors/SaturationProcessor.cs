@@ -2,40 +2,38 @@
 using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Reflection.Emit;
 
 namespace DataCollectorService.Processors
 {
-    public class SaturationProcessor : IMetricProcessor
+    public class SaturationProcessor : MetricProcessorBase
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
+        private readonly MetricGenerationConfig _config;
 
-        public SaturationProcessor(IGeneratorService generator, 
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
+        public SaturationProcessor(IGeneratorService generator,
+            IKafkaService kafkaService,
+            IOptions<MetricGenerationConfig> config,
+            ILogger<SaturationProcessor> logger)
+            : base(generator, kafkaService, logger)
         {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
+            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task Generate(Patient patient)
+        protected override MetricType GetMetricType() => MetricType.Saturation;
+        protected override int GetIntervalSeconds() => _config.SaturationIntervalSeconds;
+        protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            if (patient.MetricIntervals["Saturation"] >= _intervalSeconds.SaturationIntervalSeconds)
-            {
-                var newValue = _generator.GenerateSaturation(patient.Saturation.Value);
-                patient.Saturation.Value = newValue;
-                patient.Saturation.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Saturation"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "Saturation", newValue);
-            }
+            return await Task.FromResult(_generator.GenerateSaturation(patient.Saturation.Value));
         }
 
-        public void Log(Patient patient, ILogger logger)
+        protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            logger.LogInformation($"[{patient.Name}] Сатурация: {patient.Saturation.Value}%");
+            patient.Saturation.Value = value;
+            patient.Saturation.LastUpdate = DateTime.UtcNow;
         }
+
+        protected override double GetMetricValue(Patient patient) => patient.Saturation.Value;
+        protected override string GetUnit() => "%";
     }
 }

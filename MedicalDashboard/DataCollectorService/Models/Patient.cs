@@ -23,12 +23,12 @@
         }
         public double Height { get; set; }
 
-        public Metric HeartRate { get; set; } = new();
+        public Metric Pulse { get; set; } = new();
         public Metric Saturation { get; set; } = new();
         public Metric Temperature { get; set; } = new();
-        public Metric Respiration { get; set; } = new();
-        public Metric SysPressure { get; set; } = new();
-        public Metric DiasPressure { get; set; } = new();
+        public Metric RespirationRate { get; set; } = new();
+        public Metric SystolicPressure { get; set; } = new();
+        public Metric DiastolicPressure { get; set; } = new();
         public Metric Hemoglobin { get; set; } = new();
         public Metric Weight { get; set; } = new();
         public Metric BMI { get; set; } = new();
@@ -38,7 +38,7 @@
         {
             MetricIntervals = new Dictionary<string, int>()
             {
-                ["HeartRate"] = 0, // Либо _random.Next(0, _config.HeartRateIntervalSeconds),
+                ["Pulse"] = 0, // Либо _random.Next(0, _config.HeartRateIntervalSeconds),
                                    // чтобы метрики генерировались не одновременно и везде так же
                 ["Saturation"] = 0,
                 ["Weight"] = 0,

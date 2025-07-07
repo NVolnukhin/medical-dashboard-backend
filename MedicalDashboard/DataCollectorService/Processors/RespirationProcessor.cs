@@ -2,40 +2,38 @@
 using DataCollectorService.Models;
 using DataCollectorService.Services;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Reflection.Emit;
 
 namespace DataCollectorService.Processors
 {
-    public class RespirationProcessor : IMetricProcessor
+    public class RespirationProcessor : MetricProcessorBase
     {
-        private readonly IGeneratorService _generator;
-        private readonly MetricGenerationConfig _intervalSeconds;
-        private readonly IKafkaService _kafkaService;
+        private readonly MetricGenerationConfig _config;
 
-        public RespirationProcessor(IGeneratorService generator, 
-            IOptions<MetricGenerationConfig> intervalSeconds,
-            IKafkaService kafkaService)
+        public RespirationProcessor(IGeneratorService generator,
+            IKafkaService kafkaService,
+            IOptions<MetricGenerationConfig> config,
+            ILogger<RespirationProcessor> logger)
+            : base(generator, kafkaService, logger)
         {
-            _generator = generator;
-            _intervalSeconds = intervalSeconds.Value;
-            _kafkaService = kafkaService;
+            _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        public async Task Generate(Patient patient)
+        protected override MetricType GetMetricType() => MetricType.RespirationRate;
+        protected override int GetIntervalSeconds() => _config.RespirationIntervalSeconds;
+        protected override async Task<double> GenerateMetricValue(Patient patient)
         {
-            if (patient.MetricIntervals["Respiration"] >= _intervalSeconds.RespirationIntervalSeconds)
-            {
-                var newValue = _generator.GenerateRespiration(patient.Respiration.Value);
-                patient.Respiration.Value = newValue;
-                patient.Respiration.LastUpdate = DateTime.UtcNow;
-                patient.MetricIntervals["Respiration"] = 0;
-
-                await _kafkaService.SendToAllTopics(patient, "Respiration", newValue);
-            }
+            return await Task.FromResult(_generator.GenerateRespiration(patient.RespirationRate.Value));
         }
 
-        public void Log(Patient patient, ILogger logger)
+        protected override void UpdatePatientMetric(Patient patient, double value)
         {
-            logger.LogInformation($"[{patient.Name}] Частота дыхания: {patient.Respiration.Value} вдохов/мин");
+            patient.RespirationRate.Value = value;
+            patient.RespirationRate.LastUpdate = DateTime.UtcNow;
         }
+
+        protected override double GetMetricValue(Patient patient) => patient.RespirationRate.Value;
+        protected override string GetUnit() => "вдохов/мин";
     }
 }

@@ -2,7 +2,7 @@
 {
     public interface IGeneratorService
     {
-        double GenerateHeartRate(double? previous);
+        double GeneratePulse(double? previous);
         double GenerateSaturation(double? previous);
         double GenerateSystolicPressure();
         double GenerateDiastolicPressure();

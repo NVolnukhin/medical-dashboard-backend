@@ -20,11 +20,10 @@ builder.Services.AddSingleton<IKafkaService, KafkaService>();
 builder.Services.AddSingleton<MetricGenerationConfig>(sp =>
     sp.GetRequiredService<IOptions<MetricGenerationConfig>>().Value);
 
-builder.Services.AddSingleton<IMetricProcessor, HeartRateProcessor>();
+builder.Services.AddSingleton<IMetricProcessor, PulseProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, SaturationProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, TemperatureProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, RespirationProcessor>();
-builder.Services.AddSingleton<IMetricProcessor, PressureProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, SystolicPressureProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, DiastolicPressureProcessor>();
 builder.Services.AddSingleton<IMetricProcessor, HemoglobinProcessor>();
