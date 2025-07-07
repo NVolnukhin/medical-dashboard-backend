@@ -1,8 +1,10 @@
 ﻿using DataCollectorService.Processors;
+using DataCollectorService.DCSAppContext;
 using DataCollectorService.Services;
 using DataCollectorService.Worker;
 using DataCollectorService.Kafka;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -10,6 +12,9 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 
 builder.Services.Configure<MetricGenerationConfig>(
     builder.Configuration.GetSection("MetricGeneration"));
+
+builder.Services.AddDbContext<DataCollectorDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.Configure<KafkaConfig>(
     builder.Configuration.GetSection("Kafka"));

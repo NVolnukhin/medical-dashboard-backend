@@ -1,7 +1,11 @@
-﻿using DataCollectorService.Models;
+﻿using DataCollectorService.DCSAppContext;
+using DataCollectorService.Models;
 using DataCollectorService.Processors;
 using DataCollectorService.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Shared;
+using System.Data;
 
 namespace DataCollectorService.Worker
 {
@@ -9,6 +13,7 @@ namespace DataCollectorService.Worker
     {
         private readonly IGeneratorService _generator;
         private readonly ILogger<WorkerService> _logger;
+        private readonly DataCollectorDbContext _dbContext;
         private readonly List<Patient> _patients = new();
         private readonly MetricGenerationConfig _config;
         private readonly List<IMetricProcessor> _metricProcessors = new();
@@ -18,37 +23,71 @@ namespace DataCollectorService.Worker
             IGeneratorService generator,
             ILogger<WorkerService> logger,
             IOptions<MetricGenerationConfig> config,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            DataCollectorDbContext context
+            )
         {
             _generator = generator;
             _logger = logger;
             _config = config.Value;
+            _dbContext = context;
 
             _metricProcessors = serviceProvider.GetServices<IMetricProcessor>().ToList();
-
-            InitPatients();
-
-            //var cfg = config.Value;
-            //_metricProcessors.Add(new HeartRateProcessor(generator, cfg.HeartRateIntervalSeconds));
-            //_metricProcessors.Add(new SaturationProcessor(generator, cfg.SaturationIntervalSeconds));
-            //_metricProcessors.Add(new TemperatureProcessor(generator, cfg.TemperatureIntervalSeconds));
-            //_metricProcessors.Add(new RespirationProcessor(generator, cfg.RespirationIntervalSeconds));
-            //_metricProcessors.Add(new PressureProcessor(generator, cfg.PressureIntervalSeconds));
-            //_metricProcessors.Add(new HemoglobinProcessor(generator, cfg.HemoglobinIntervalSeconds));
-            //_metricProcessors.Add(new WeightProcessor(generator, cfg.WeightIntervalSeconds));
-            //_metricProcessors.Add(new CholesterolProcessor(generator, cfg.CholesterolIntervalSeconds));
+            _patients = InitPatients();
         }
 
-        private void InitPatients()
+        private List<Patient> InitPatients()
         {
-            // Временно добавила инициализацию отдельных пациентов
-            _patients.Add(new Patient { Id = Guid.Parse("dd944c9e-1a0a-4b09-9c3a-7c5dc0791001"), Name = "Петрова Анна Михайловна", BaseWeight = 60.0, Height = 1.52 });
-            _patients.Add(new Patient { Id = Guid.Parse("967c6ce2-fb7e-4355-82a5-a1994b8f36d7"), Name = "Фролова Ольга Анатольевна", BaseWeight = 78.0, Height = 1.84 });
+            var patients = new List<Patient>();
+            var dtos = _dbContext.Patients
+                .ToList();
 
-            foreach (var patient in _patients) 
+            foreach (var dto in dtos)
             {
+                var patient = new Patient
+                {
+                    Id = dto.PatientId,
+                    Age = CalculateAge(dto.BirthDate),
+                    Height = dto.Height,
+                    Name = $"{dto.FirstName} {dto.MiddleName} {dto.LastName}".Trim(),
+                    Sex = dto.Sex.ToString(),
+                    Ward = dto.Ward
+                };
+
+                var metricsDto = _dbContext.Metrics.ToList();
+                var weightMetric = metricsDto.FirstOrDefault(m => m.Type == "Weight");
+                if (weightMetric != null)
+                {
+                    patient.BaseWeight = weightMetric.Value;
+                }
+
                 patient.InitializeIntervals();
+                patients.Add(patient);
             }
+            return patients;
+        }
+
+        private static int CalculateAge(DateTime birthDate)
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birthDate.Year;
+            if (birthDate.Date > today.AddYears(-age)) age--;
+            return age;
+        }
+
+
+        private void ParseDataFromDTO(PatientDto patientDto, MetricDto metricDto, Patient patient)
+        {
+            patient.Age = DateTime.Now.Year - patientDto.BirthDate.Year;
+            patient.Height = patientDto.Height;
+            patient.Name = patientDto.FirstName + " " + patientDto.MiddleName + " " + patientDto.LastName;
+            
+            if (metricDto.Type == "Weight")
+            {
+                patient.BaseWeight = metricDto.Value;
+            }
+
+
         }
 
         protected override async Task ExecuteAsync(CancellationToken ct)
@@ -71,7 +110,7 @@ namespace DataCollectorService.Worker
                         foreach (var processor in _metricProcessors) 
                         {
                             await processor.Generate(patient);
-                            processor.Log(patient, _logger);
+                            //processor.Log(patient, _logger);
                         }
                     }
                 }

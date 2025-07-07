@@ -6,7 +6,8 @@
         public int Age { get; set; }
         public Dictionary<string, int> MetricIntervals = new Dictionary<string, int>();
         public string? Sex { get; set; }
-        public string? Name { get; init; }
+        public string? Name { get; set; }
+        public int? Ward {  get; set; }
 
         private double _baseWeight;
         public double BaseWeight
@@ -21,7 +22,7 @@
                 }
             }
         }
-        public double Height { get; set; }
+        public double? Height { get; set; }
 
         public Metric Pulse { get; set; } = new();
         public Metric Saturation { get; set; } = new();
