@@ -10,9 +10,25 @@ public class ApplicationDbContext : DbContext
     {
     }
     public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
+    public DbSet<DeadLetterMessage> DeadLetterMessages { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<DeadLetterMessage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.MessageBrokerTopic).IsRequired();
+            entity.Property(e => e.Subject).IsRequired();
+            entity.Property(e => e.Body).IsRequired();
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.ErrorMessage).IsRequired();
+            entity.Property(e => e.Receiver).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.IsProcessed).IsRequired();
+        });
+
+        
         modelBuilder.Entity<NotificationTemplate>(entity =>
         {
             entity.HasKey(e => e.Id);
