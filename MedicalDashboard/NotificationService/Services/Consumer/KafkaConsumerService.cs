@@ -3,6 +3,7 @@ using System.Text.Json;
 using Confluent.Kafka;
 using NotificationService.Data.Models;
 using NotificationService.Handlers;
+using NotificationService.Services.DeadLetter;
 using Shared.Extensions.Logging;
 
 namespace NotificationService.Services.Consumer;
@@ -260,6 +261,7 @@ public class KafkaConsumerService<T> : BackgroundService, IMessageBroker
             if (message == null)
             {
                 _logger.LogWarning($"Ошибка десериализации сообщения: {consumeResult.Message.Value}");
+                await SendToDeadLetterQueueAsync(consumeResult, "Ошибка десериализации сообщения", stoppingToken);
                 return;
             }
 
@@ -272,14 +274,44 @@ public class KafkaConsumerService<T> : BackgroundService, IMessageBroker
         catch (JsonException ex)
         {
             _logger.LogFailure($"JSON deserialization error for message: {consumeResult.Message.Value}", ex);
+            await SendToDeadLetterQueueAsync(consumeResult, $"JSON deserialization error: {ex.Message}", stoppingToken);
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogFailure("Ошибка обработки сообщения", ex);
+            await SendToDeadLetterQueueAsync(consumeResult, $"Ошибка обработки сообщения: {ex.Message}", stoppingToken);
             throw;
         }
     }
+    
+    private async Task SendToDeadLetterQueueAsync(ConsumeResult<string, string> consumeResult, string errorMessage, CancellationToken stoppingToken)
+    {
+        try
+        {
+            using var scope = _serviceScopeFactory.CreateScope();
+            var deadLetterService = scope.ServiceProvider.GetRequiredService<IDeadLetterService>();
+            
+            // Извлекаем получателя из сообщения
+            var message = JsonSerializer.Deserialize<T>(consumeResult.Message.Value);
+            string receiver = message is NotificationRequest notification ? notification.Recipient : "unknown";
+            
+            _logger.LogInfo($"Отправка в DeadLetterService. Topic: {consumeResult.Topic}, Error: {errorMessage}");
+            await deadLetterService.PublishToDeadLetterQueueAsync(
+                consumeResult.Topic,
+                consumeResult.Message.Value,
+                errorMessage,
+                receiver,
+                stoppingToken);
+            
+            _logger.LogSuccess("Отправлено в DeadLetterService");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogFailure("Ошибка отправки в DeadLetterService", ex);
+        }
+    }
+
 
     public override void Dispose()
     {

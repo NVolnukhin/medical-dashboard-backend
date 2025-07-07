@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using NotificationService.Config;
+using NotificationService.Services.DeadLetter;
 using NotificationService.Services.Notification;
 using Shared.Extensions.Logging;
 
@@ -40,12 +41,21 @@ public class NotificationQueueProcessor : BackgroundService
                     
                     using var scope = _serviceScopeFactory.CreateScope();
                     var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    var deadLetterService = scope.ServiceProvider.GetRequiredService<IDeadLetterService>();
                     
                     var result = await notificationService.SendNotificationAsync(notification, stoppingToken);
                     
                     if (!result.Success)
                     {
-                        _logger.LogFailure($"Ошибка отправки уведомления после 3 попыток: {result.ErrorMessage}");
+                        _logger.LogFailure($"Ошибка отправки уведомления: {result.ErrorMessage}");
+                        
+                        // Отправляем в DeadLetter после 3 неудачных попыток
+                        await deadLetterService.PublishToDeadLetterQueueAsync(
+                            "notification-service",
+                            System.Text.Json.JsonSerializer.Serialize(notification),
+                            result.ErrorMessage,
+                            notification.Recipient,
+                            stoppingToken);
                     }
                     else
                     {
@@ -66,4 +76,4 @@ public class NotificationQueueProcessor : BackgroundService
 
         _logger.LogInfo("NotificationQueueProcessor остановлен");
     }
-} 
+}
