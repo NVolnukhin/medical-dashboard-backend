@@ -1022,13 +1022,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
-    options:
-      tags:
-        - DeadLetter
-      summary: Preflight OPTIONS for /dead-letters
-      responses:
-        '200':
-          description: Preflight response
 
   /dead-letters/unprocessed:
     get:
@@ -1052,13 +1045,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
-    options:
-      tags:
-        - DeadLetter
-      summary: Preflight OPTIONS for /dead-letters/unprocessed
-      responses:
-        '200':
-          description: Preflight response
 
   /dead-letters/{id}/process:
     post:
@@ -1094,20 +1080,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
-    options:
-      tags:
-        - DeadLetter
-      summary: Preflight OPTIONS for /dead-letters/{id}/process
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Preflight response
 
 components:
   securitySchemes:
