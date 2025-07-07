@@ -14,7 +14,9 @@ using NotificationService.Services.Notification;
 using NotificationService.Services.Queue;
 using NotificationService.Services.Retry;
 using NotificationService.Interfaces;
+using NotificationService.Repositories.DeadLetter;
 using NotificationService.Repositories.Template;
+using NotificationService.Services.DeadLetter;
 using NotificationService.WebPush.Sender;
 using Shared;
 using Shared.Extensions.Logging;
@@ -131,11 +133,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Регистрация репо
 builder.Services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+builder.Services.AddScoped<IDeadLetterRepository, DeadLetterRepository>();
+
 
 // Регистрация сервисов
 builder.Services.AddSingleton<INotificationSender, EmailNotificationSender>();
 builder.Services.AddSingleton<INotificationSender, WebPushNotificationSender>();
 builder.Services.AddSingleton<IRetryService, RetryService>();
+builder.Services.AddScoped<IDeadLetterService, DeadLetterService>();
 builder.Services.AddScoped<INotificationService, NotificationService.Services.Notification.NotificationService>();
 builder.Services.AddScoped<IMessageHandler<NotificationRequest>, KafkaNotificationHandler>();
 builder.Services.AddScoped<IMessageHandler<PatientAlertMessage>, PatientAlertMessageHandler>(); 
