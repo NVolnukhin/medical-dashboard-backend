@@ -67,6 +67,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+                
+  /identity/refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Обновление токенов
+      description: Обновляет Refresh токен и выдает новый JWT токен
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identity/revoke-token:
+    post:
+      tags:
+        - Authentication
+      summary: Отозвать токен
+      description: Отзывает refresh токен пользователя
+      operationId: revoke
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Успешно отозван
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /identity/register:
     post:
@@ -86,6 +148,18 @@ paths:
           description: Пользователь успешно создан
         '400':
           description: Пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
           content:
             application/json:
               schema:
@@ -138,6 +212,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  
+  /identity/get-roles:
+    get:
+      tags:
+        - Authentication
+      summary: Получение списка доступных ролей пользователей
+      description: >
+        Возвращает перечень всех ролей, которые могут быть назначены пользователю при регистрации.
+        Роли возвращаются в формате строкового массива.
+      operationId: getAvailableRoles
+      responses:
+        '200':
+          description: Успешный запрос. Возвращает массив доступных ролей.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum: [ Doctor, Admin, Nurse ]
+                  example: Doctor
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /identity/update-password:
     put:
@@ -164,7 +277,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -306,7 +423,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/PatientDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -341,7 +462,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -374,7 +505,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/PatientDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Пациент не найден
           content:
@@ -423,7 +564,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Пациент не найден
           content:
@@ -456,7 +607,17 @@ paths:
         '204':
           description: Пациент удален
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -510,7 +671,17 @@ paths:
         '204':
           description: Метрики не найдены
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -545,7 +716,17 @@ paths:
                 items:
                   $ref: '#/components/schemas/MetricDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -582,7 +763,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -649,7 +840,17 @@ paths:
                 items:
                   $ref: '#/components/schemas/AlertDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -682,7 +883,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Алерт не найден
           content:
@@ -715,7 +926,17 @@ paths:
         '204':
           description: Алерт удален
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -760,7 +981,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Алерт не найден
           content:
@@ -929,6 +1160,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -959,6 +1203,20 @@ paths:
                     value:
                       type: integer
                       description: Числовое значение типа
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -989,6 +1247,19 @@ paths:
                     value:
                       type: integer
                       description: Числовое значение приоритета
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -1118,11 +1389,42 @@ components:
           type: string
           description: JWT токен доступа
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Refresh токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
         status:
           type: string
           description: Статус входа
           example: "Success"
+        role:
+          type: string
+          description: Роль юзера
+          example: "doctor/admin/nurse"
 
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          format: guid
+          description: Старый токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
+          
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен доступа
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Refresh токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
+    
     RegisterRequest:
       type: object
       required:
@@ -1573,18 +1875,11 @@ components:
     ErrorResponse:
       type: object
       properties:
-        error:
-          type: string
-          description: Сообщение об ошибке
-          example: "Something went wrong"
-        message:
+        errorMessage:
           type: string
           description: Детальное сообщение об ошибке
           example: "Detailed error message"
-        statusCode:
-          type: integer
-          description: HTTP статус код
-          example: 400
+        
 
     DeadLetterMessage:
       type: object

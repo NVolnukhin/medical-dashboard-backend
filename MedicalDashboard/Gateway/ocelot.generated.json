@@ -20,6 +20,44 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/identity/refresh-token",
+      "UpstreamHttpMethod": [
+        "POST",
+        "OPTIONS"
+      ],
+      "DownstreamPathTemplate": "/api/identity/refresh-token",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5249
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/identity/revoke-token",
+      "UpstreamHttpMethod": [
+        "POST",
+        "OPTIONS"
+      ],
+      "DownstreamPathTemplate": "/api/identity/revoke-token",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5249
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
+    {
       "UpstreamPathTemplate": "/identity/register",
       "UpstreamHttpMethod": [
         "POST",
@@ -45,6 +83,25 @@
         "OPTIONS"
       ],
       "DownstreamPathTemplate": "/api/identity/validate",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5249
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/identity/get-roles",
+      "UpstreamHttpMethod": [
+        "GET",
+        "OPTIONS"
+      ],
+      "DownstreamPathTemplate": "/api/identity/get-roles",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {

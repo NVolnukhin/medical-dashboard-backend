@@ -2,12 +2,14 @@
 using AuthService.Kafka;
 using AuthService.Models;
 using AuthService.Repository.PasswordRecovery;
+using AuthService.Repository.RefreshToken;
 using AuthService.Repository.User;
 using AuthService.Services.Identity;
 using AuthService.Services.Jwt;
 using AuthService.Services.Password;
 using AuthService.Services.PasswordRecovery;
 using AuthService.Services.RecoveryToken;
+using AuthService.Services.RefreshToken;
 using AuthService.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Rewrite;
@@ -32,6 +34,7 @@ namespace AuthService
 
             // Подключаем репозитории
             services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
 
             // Подключаем сервис авторизации
             services.AddTransient<IIdentityService, IdentityService>();
@@ -54,6 +57,9 @@ namespace AuthService
             //Подключаем репо и сервис восстановления пароля
             services.AddTransient<IPasswordRecoveryTokenRepository, PasswordRecoveryTokenRepository>();
             services.AddTransient<IPasswordRecoveryService, PasswordRecoveryService>();
+            
+            // Подключаем сервис для работы с refresh token
+            services.AddTransient<IRefreshTokenService, RefreshTokenService>();
             
             // Конфигурация натсроек JWT 
             services.Configure<JwtConfig>(Configuration.GetSection("jwt"));

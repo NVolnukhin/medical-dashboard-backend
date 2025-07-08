@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Middleware;
+using Shared;
 
 namespace AuthService.Services.Jwt
 {
@@ -21,7 +22,7 @@ namespace AuthService.Services.Jwt
         }
 
         // Формирование токена
-        public async Task<string> GetTokenAsync(Guid userId)
+        public async Task<string> GetTokenAsync(Guid userId, string role)
         {
 
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.SecretKey));  // Ключ для подписи токена на основе секрета
@@ -30,7 +31,7 @@ namespace AuthService.Services.Jwt
             var claims = new List<Claim>
             {
                 new Claim("userId", userId.ToString()),
-                //new Claim("role", "doctor")                 //TODO: заменить хардкод на сервис ролей 
+                new Claim("role", role.ToString().ToLower()) 
             };
 
             var expirationDate = DateTime.UtcNow.AddDays(7);  // Срок действия токена TODO: изменпть на options.ExpiryMinutes

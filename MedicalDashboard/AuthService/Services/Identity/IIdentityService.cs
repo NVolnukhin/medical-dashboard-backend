@@ -1,4 +1,5 @@
 ﻿using AuthService.DTOs;
+using Shared;
 
 namespace AuthService.Services.Identity
 {
@@ -8,5 +9,7 @@ namespace AuthService.Services.Identity
         Task<AuthService.Models.User?> GetUserByIdAsync(Guid userId);
         Task InsertUserAsync(AuthService.Models.User user);
         Task<LoginResponse> LoginAsync(string email, string password, string? ipAddress);
+        Task<TokensResponse> RefreshTokenAsync(string refreshToken, string? ipAddress);
+        Task RevokeTokenAsync(string refreshToken, string? ipAddress);
     }
 }

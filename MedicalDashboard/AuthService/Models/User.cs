@@ -12,5 +12,6 @@
         public required string Password { get; set; }
         public string Salt { get; set; }
         public bool IsActive { get; init; }
+        public string Role { get; init; }
     }
 }

@@ -7,6 +7,7 @@ namespace AuthService.Models
     {
         public DbSet<User> Users => Set<User>();
         public DbSet<PasswordRecoveryToken> PasswordRecoveryTokens => Set<PasswordRecoveryToken>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
