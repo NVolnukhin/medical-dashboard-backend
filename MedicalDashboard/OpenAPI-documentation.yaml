@@ -94,7 +94,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /identity/revoke-token:
     post:
       tags:
@@ -113,6 +119,12 @@ paths:
           description: Успешно отозван
         '400':
           description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
           content:
             application/json:
               schema:
@@ -136,6 +148,18 @@ paths:
           description: Пользователь успешно создан
         '400':
           description: Пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
           content:
             application/json:
               schema:
@@ -188,6 +212,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  
+  /identity/get-roles:
+    get:
+      tags:
+        - Authentication
+      summary: Получение списка доступных ролей пользователей
+      description: >
+        Возвращает перечень всех ролей, которые могут быть назначены пользователю при регистрации.
+        Роли возвращаются в формате строкового массива.
+      operationId: getAvailableRoles
+      responses:
+        '200':
+          description: Успешный запрос. Возвращает массив доступных ролей.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum: [ Doctor, Admin, Nurse ]
+                  example: Doctor
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /identity/update-password:
     put:
@@ -214,7 +277,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -356,7 +423,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/PatientDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -391,7 +462,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -424,7 +505,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/PatientDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Пациент не найден
           content:
@@ -473,7 +564,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Пациент не найден
           content:
@@ -506,7 +607,17 @@ paths:
         '204':
           description: Пациент удален
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -560,7 +671,17 @@ paths:
         '204':
           description: Метрики не найдены
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -595,7 +716,17 @@ paths:
                 items:
                   $ref: '#/components/schemas/MetricDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -632,7 +763,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -699,7 +840,17 @@ paths:
                 items:
                   $ref: '#/components/schemas/AlertDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -732,7 +883,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertDto'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Алерт не найден
           content:
@@ -765,7 +926,17 @@ paths:
         '204':
           description: Алерт удален
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -810,7 +981,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Не авторизован
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Алерт не найден
           content:
@@ -979,6 +1160,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -1009,6 +1203,20 @@ paths:
                     value:
                       type: integer
                       description: Числовое значение типа
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
@@ -1039,6 +1247,19 @@ paths:
                     value:
                       type: integer
                       description: Числовое значение приоритета
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Внутренняя ошибка сервера
           content:
