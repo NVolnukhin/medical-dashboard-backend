@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Middleware", "Middleware\Middleware.csproj", "{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.MedicalDashboard", "Tests.MedicalDashboard\Tests.MedicalDashboard.csproj", "{D9F05DD8-8AA8-4A9A-8031-AC43FBCED310}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,5 +56,9 @@ Global
 		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C0D906F-BD94-4305-A4A9-9F2BCA0F77A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9F05DD8-8AA8-4A9A-8031-AC43FBCED310}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9F05DD8-8AA8-4A9A-8031-AC43FBCED310}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9F05DD8-8AA8-4A9A-8031-AC43FBCED310}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9F05DD8-8AA8-4A9A-8031-AC43FBCED310}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

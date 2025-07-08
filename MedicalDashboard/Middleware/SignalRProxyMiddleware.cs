@@ -1,10 +1,9 @@
-using System.Net;
 using System.Net.WebSockets;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Middleёёware;
+namespace Middleware;
 
 public class SignalRProxyMiddleware
 {
