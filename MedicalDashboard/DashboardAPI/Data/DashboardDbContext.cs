@@ -12,6 +12,7 @@ public class DashboardDbContext : DbContext
     public DbSet<Patient> Patients { get; set; } = null!;
     public DbSet<Metric> Metrics { get; set; } = null!;
     public DbSet<Alert> Alerts { get; set; } = null!;
+    public DbSet<Device> Devices { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +83,22 @@ public class DashboardDbContext : DbContext
             entity.HasIndex(e => e.PatientId);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.IsProcessed);
+        });
+
+        // Конфигурация Device
+        modelBuilder.Entity<Device>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired();
+            entity.Property(e => e.Ward).IsRequired();
+            entity.Property(e => e.InUsing).IsRequired();
+            entity.Property(e => e.BusyBy);
+            // Храним список строк как json
+            entity.Property(e => e.ReadableMetrics)
+                .HasConversion(
+                    v => string.Join(",", v),
+                    v => v.Split(',', System.StringSplitOptions.RemoveEmptyEntries).ToList()
+                );
         });
     }
 } 
