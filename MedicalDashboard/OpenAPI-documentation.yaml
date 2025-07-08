@@ -1033,10 +1033,19 @@ components:
           type: string
           description: JWT токен доступа
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Refresh токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
         status:
           type: string
           description: Статус входа
           example: "Success"
+        role:
+          type: string
+          description: Роль юзера
+          example: "doctor/admin/nurse"
+
 
     RegisterRequest:
       type: object
