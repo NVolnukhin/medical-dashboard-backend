@@ -30,6 +30,7 @@ public class WeightProcessor : MetricProcessorBase
     {
         patient.Weight.Value = value; // обновление значения
         patient.Weight.LastUpdate = DateTime.UtcNow; // рбновление времени
+        //_logger.LogInformation($"ВЕС ПАЦИЕНТА {patient.Weight.Value}");
     }
 
     protected override double GetMetricValue(Patient patient) => patient.Weight.Value; //  текущее значение
