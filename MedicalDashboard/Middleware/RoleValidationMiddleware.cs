@@ -137,6 +137,76 @@ public class RoleValidationMiddleware
             }
         }
 
+        // Проверяем доступ ( /devices )
+        if (path.StartsWith("/devices"))
+        {
+            if (method == "GET")
+            {
+                await _next(context);
+                return;
+            }
+
+            if (method == "POST" && path == "/devices")
+            {
+                // Только admin
+                if (role != "admin")
+                {
+                    _logger.LogWarning($"Access denied to {path} {method}. Required role: 'admin', Actual role: '{role}'");
+                    context.Response.StatusCode = 403;
+                    await context.Response.WriteAsJsonAsync(new { error = "Requires admin role" });
+                    return;
+                }
+            }
+
+            if (method == "PUT" && path.StartsWith("/devices/"))
+            {
+                // Только admin
+                if (role != "admin")
+                {
+                    _logger.LogWarning($"Access denied to {path} {method}. Required role: 'admin', Actual role: '{role}'");
+                    context.Response.StatusCode = 403;
+                    await context.Response.WriteAsJsonAsync(new { error = "Requires admin role" });
+                    return;
+                }
+            }
+
+            if (method == "DELETE" && path.StartsWith("/devices/"))
+            {
+                // Только admin
+                if (role != "admin")
+                {
+                    _logger.LogWarning($"Access denied to {path} {method}. Required role: 'admin', Actual role: '{role}'");
+                    context.Response.StatusCode = 403;
+                    await context.Response.WriteAsJsonAsync(new { error = "Requires admin role" });
+                    return;
+                }
+            }
+
+            if (method == "POST" && path.EndsWith("/attach"))
+            {
+                // Только doctor
+                if (role != "doctor")
+                {
+                    _logger.LogWarning($"Access denied to {path} {method}. Required role: 'doctor', Actual role: '{role}'");
+                    context.Response.StatusCode = 403;
+                    await context.Response.WriteAsJsonAsync(new { error = "Requires doctor role" });
+                    return;
+                }
+            }
+
+            if (method == "POST" && path.EndsWith("/detach"))
+            {
+                // Только doctor
+                if (role != "doctor")
+                {
+                    _logger.LogWarning($"Access denied to {path} {method}. Required role: 'doctor', Actual role: '{role}'");
+                    context.Response.StatusCode = 403;
+                    await context.Response.WriteAsJsonAsync(new { error = "Requires doctor role" });
+                    return;
+                }
+            }
+        }
+
         // SignalR hubs — доступны всем ролям
         if (path.StartsWith("/hubs/") || path.StartsWith("/alerts"))
         {
