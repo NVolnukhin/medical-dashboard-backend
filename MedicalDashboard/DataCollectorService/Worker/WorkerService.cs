@@ -1,17 +1,20 @@
 ﻿using DataCollectorService.DCSAppContext;
 using DataCollectorService.Models;
+using DataCollectorService.Observerer;
 using DataCollectorService.Processors;
 using DataCollectorService.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Shared;
+using System;
 using System.Data;
 
 namespace DataCollectorService.Worker
 {
-    public class WorkerService : BackgroundService
+    public class WorkerService : BackgroundService, ISubject
     {
         private readonly IGeneratorService _generator;
+        private readonly List<IObserver> _observers = new();
         private readonly ILogger<WorkerService> _logger;
         private readonly DataCollectorDbContext _dbContext;
         private readonly List<Patient> _patients = new();
@@ -24,8 +27,8 @@ namespace DataCollectorService.Worker
             ILogger<WorkerService> logger,
             IOptions<MetricGenerationConfig> config,
             IServiceProvider serviceProvider,
-            DataCollectorDbContext context
-            )
+            DataCollectorDbContext context,
+            IEnumerable<IObserver> observers            )
         {
             _generator = generator;
             _logger = logger;
@@ -33,6 +36,11 @@ namespace DataCollectorService.Worker
             _dbContext = context;
 
             _metricProcessors = serviceProvider.GetServices<IMetricProcessor>().ToList();
+            foreach (var observer in observers)
+            {
+                Attach(observer);
+            }
+
             _patients = InitPatients();
         }
 
@@ -75,6 +83,25 @@ namespace DataCollectorService.Worker
             return age;
         }
 
+        public void Attach(IObserver observer)
+        {
+            if (!_observers.Contains(observer))
+                _observers.Add(observer);
+        }
+
+        public void Detach(IObserver observer)
+        {
+            _observers.Remove(observer);
+        }
+
+        public async Task Notify(Patient patient)
+        {
+            foreach (var observer in _observers)
+            {
+                await observer.Update(patient);
+            }
+        }
+
 
         private void ParseDataFromDTO(PatientDto patientDto, MetricDto metricDto, Patient patient)
         {
@@ -106,12 +133,7 @@ namespace DataCollectorService.Worker
                         {
                             patient.MetricIntervals[metric] += BaseInterval;
                         }
-
-                        foreach (var processor in _metricProcessors) 
-                        {
-                            await processor.Generate(patient);
-                            //processor.Log(patient, _logger);
-                        }
+                        await Notify(patient);
                     }
                 }
                 catch (Exception ex)
