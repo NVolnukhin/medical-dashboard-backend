@@ -31,9 +31,10 @@ namespace DataCollectorService.Processors
         {
             patient.BMI.Value = value;
             patient.BMI.LastUpdate = DateTime.UtcNow;
+            //_logger.LogInformation($"ВЕС ПАЦИЕНТА {patient.Weight.Value}");
         }
 
         protected override double GetMetricValue(Patient patient) => patient.BMI.Value;
-        protected override string GetUnit() => "кг/м²";
+        protected override string GetUnit() => "кг/м2";
     }
 }

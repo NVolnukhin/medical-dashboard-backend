@@ -157,11 +157,11 @@
             {
                 return 0;
             }
-            double baseBMI = baseWeight / Math.Pow(baseHeight, 2);
+            double baseBMI = 100 * baseWeight / Math.Pow(baseHeight, 2);
             try
             {
                 double currentWeight = GenerateWeight(previous, baseWeight);
-                double bmi = currentWeight / Math.Pow(baseHeight, 2);
+                double bmi = 10000 * currentWeight / Math.Pow(baseHeight, 2);
                 double baseValue = previous ?? bmi;
                 return bmi;
             }

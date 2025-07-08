@@ -1,6 +1,7 @@
 ﻿using DataCollectorService.Kafka;
 using DataCollectorService.Models;
 using DataCollectorService.Services;
+using DataCollectorService.Observerer;
 using Microsoft.Extensions.Options;
 using Shared;
 using Shared.Extensions.Logging;
@@ -12,6 +13,11 @@ public abstract class MetricProcessorBase : IMetricProcessor
     protected readonly IGeneratorService _generator;
     protected readonly IKafkaService _kafkaService;
     protected readonly ILogger _logger;
+
+    public async Task Update(Patient patient)
+    {
+        await Generate(patient);
+    }
 
     protected abstract MetricType GetMetricType(); //  тип метрики
     protected abstract int GetIntervalSeconds(); //  интервал обновления
