@@ -8,6 +8,7 @@ using AuthService.Services.Password;
 using AuthService.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared;
 using Shared.Extensions.Logging;
 
 namespace AuthService.Controllers
@@ -99,31 +100,39 @@ namespace AuthService.Controllers
                     FirstName = request.FirstName,
                     MiddleName = request.MiddleName,
                     LastName = request.LastName,
-                    PhoneNumber = request.PhoneNumber
+                    PhoneNumber = request.PhoneNumber,
+                    Role = request.Role
                 };
 
-                await _identityService.InsertUserAsync(user);
-                
-                // отправка письма на почту 
-                var message = new NotificationMessage
+                try
                 {
-                    Type = 0,
-                    Recipient = request.Email,
-                    Subject = "Welcome letter",
-                    Body = "Welcome letter",
-                    Priority = 0,
-                    TemplateName = "Welcome letter",
-                    TemplateParameters = new Dictionary<string, string>
+                    await _identityService.InsertUserAsync(user);
+
+                    // отправка письма на почту 
+                    var message = new NotificationMessage
                     {
-                        { "userName", $"{request.FirstName} {request.LastName}" },
-                        { "login", request.Email },
-                        { "password", password }
-                    }
-                };
+                        Type = 0,
+                        Recipient = request.Email,
+                        Subject = "Welcome letter",
+                        Body = "Welcome letter",
+                        Priority = 0,
+                        TemplateName = "Welcome letter",
+                        TemplateParameters = new Dictionary<string, string>
+                        {
+                            { "userName", $"{request.FirstName} {request.LastName}" },
+                            { "login", request.Email },
+                            { "password", password }
+                        }
+                    };
 
-                await _notificationService.SendNotificationAsync(message);
+                    await _notificationService.SendNotificationAsync(message);
 
-                return Ok();
+                    return Ok();
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { message = $"Could not create user. Error: {ex.Message}" });
+                }
             }
             catch (Exception ex)
             {
@@ -217,11 +226,26 @@ namespace AuthService.Controllers
             }
         }
 
+        [HttpGet("get-roles")]
+        public async Task<IActionResult> GetRoles()
+        {
+            var roles = Enum.GetNames(typeof(Role));
+            
+            return Ok(roles);
+        }
+
         private Guid GetUserIdFromClaims()
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == "userId" || c.Type == ClaimTypes.NameIdentifier)?.Value;
             _logger.LogInfo($"Получен userId из клеймов для смены пароля: {userId}");
             return Guid.Parse(userId ?? throw new UnauthorizedAccessException("userId не найден в клеймах"));
+        }
+        
+        private Guid GetUserRoleFromClaims()
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "role" || c.Type == ClaimTypes.NameIdentifier)?.Value;
+            _logger.LogInfo($"Получена роль из клеймов для юзера: {userId}");
+            return Guid.Parse(userId ?? throw new UnauthorizedAccessException("role не найдена в клеймах"));
         }
     }
 }
