@@ -72,9 +72,9 @@ paths:
     post:
       tags:
         - Authentication
-      summary: Вход в систему
-      description: Аутентификация пользователя и получение JWT токена
-      operationId: login
+      summary: Обновление токенов
+      description: Обновляет Refresh токен и выдает новый JWT токен
+      operationId: refresh
       requestBody:
         required: true
         content:
@@ -105,9 +105,9 @@ paths:
     post:
       tags:
         - Authentication
-      summary: Вход в систему
-      description: Аутентификация пользователя и получение JWT токена
-      operationId: login
+      summary: Отозвать токен
+      description: Отзывает refresh токен пользователя
+      operationId: revoke
       requestBody:
         required: true
         content:
@@ -1111,9 +1111,9 @@ components:
     RefreshTokenRequest:
       type: object
       required:
-        - oldToken
+        - refreshToken
       properties:
-        email:
+        refreshToken:
           type: string
           format: guid
           description: Старый токен
