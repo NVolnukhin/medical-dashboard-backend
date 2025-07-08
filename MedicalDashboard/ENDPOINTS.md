@@ -35,6 +35,17 @@
 - `POST /patient-alerts/{id}/ack` - Подтвердить алерт
 - `DELETE /patient-alerts/{id}` - Удалить алерт
 
+### Devices
+- `GET /devices` — Список устройств (фильтрация по палате, inUsing)
+- `GET /devices/{id}` — Информация об устройстве
+- `GET /devices/on-patient/{id}` — Краткая информация об устройствах, подключённых к пациенту
+- `GET /devices/counting-metrics/{patientId}` — Уникальные метрики по устройствам пациента
+- `POST /devices` — Создать устройство
+- `PUT /devices/{id}` — Обновить устройство
+- `DELETE /devices/{id}` — Удалить устройство
+- `POST /devices/attach` — Привязать устройство к пациенту
+- `POST /devices/{id}/detach` — Отвязать устройство от пациента
+
 ## NotificationService
 
 ### Уведомления
@@ -144,39 +155,49 @@ Authorization: Bearer <jwt_token>
 
 ## RBAC
 
-| Endpoint | doctor| nurse| admin (audit) | 
-|------------------------------------------|-----------|----------|---------------------| 
-| POST /identity/login| ✅| ✅| ✅|
-| POST /identity/refresh-token| ✅| ✅| ✅|
-| POST /identity/revoke-token | ✅| ✅| ✅|
-| POST /identity/register | ❌| ❌| ✅|
-| GET /identity/get-roles | ❌| ❌| ✅|
-| PUT /identity/update-password | ✅| ✅| ✅|
-| ---------------------------------------| --------- | -------- | ------------------| 
-| POST /password-recovery/request | ✅| ✅| ✅|
-| POST /password-recovery/confirm | ✅| ✅| ✅|
-| ---------------------------------------| --------- | -------- | ------------------| 
-| GET /patients| ✅ | ✅| ✅ | 
-| GET /patients/{id}| ✅ | ✅| ✅ | 
-| POST /patients | ✅ | ❌| ❌ | 
-| PUT /patients/{id}| ✅ | ❌| ❌ | 
-| DELETE /patients/{id}| ✅ | ❌| ❌ | 
-| ---------------------------------------| --------- | -------- | ------------------| 
-| GET /metrics/{patientId}| ✅ | ✅| ✅ | 
-| GET /metrics/latest/{patientId}| ✅ | ✅| ✅ |
-| POST /metrics| ✅ | ❌| ❌ |
-| ---------------------------------------| --------- | --------| ------------------| 
-| GET /patient-alerts| ✅ | ✅| ✅ |
-| GET /patient-alerts/{id}| ✅ | ✅| ✅ |
-| POST /patient-alerts/{id}/ack| ✅ | ✅| ✅ |
-| DELETE /patient-alerts/{id}| ❌ | ❌| ✅ | 
-| ---------------------------------------| ---------| --------| ------------------|
-| Все SignalR hubs | ✅ | ✅| ✅ |
-| ---------------------------------------| ---------| --------| ------------------|
-| POST /notifications/notify| ❌| ❌| ✅|
-| GET /notifications/types| ❌| ❌| ✅| 
-| GET /notifications/priorities | ❌| ❌| ✅| 
-| GET /dead-letters | ❌| ❌| ✅| 
-| GET /dead-letters/unprocessed | ❌| ❌| ✅|
-| POST /dead-letters/{id}/process | ❌| ❌| ✅|
+| Endpoint                                                | doctor| nurse| admin (audit) | 
+|---------------------------------------------------------|-----------|----------|---------------------| 
+| POST /identity/login                                    | ✅| ✅| ✅|
+| POST /identity/refresh-token                            | ✅| ✅| ✅|
+| POST /identity/revoke-token                             | ✅| ✅| ✅|
+| POST /identity/register                                 | ❌| ❌| ✅|
+| GET /identity/get-roles                                 | ❌| ❌| ✅|
+| PUT /identity/update-password                           | ✅| ✅| ✅|
+| -------------------------------------------------------| --------- | -------- | ------------------| 
+| POST /password-recovery/request                         | ✅| ✅| ✅|
+| POST /password-recovery/confirm                         | ✅| ✅| ✅|
+| -------------------------------------------------------| --------- | -------- | ------------------| 
+| GET /patients                                           | ✅ | ✅| ✅ | 
+| GET /patients/{id}                                      | ✅ | ✅| ✅ | 
+| POST /patients                                          | ✅ | ❌| ❌ | 
+| PUT /patients/{id}                                      | ✅ | ❌| ❌ | 
+| DELETE /patients/{id}                                   | ✅ | ❌| ❌ | 
+| -------------------------------------------------------| --------- | -------- | ------------------| 
+| GET /metrics/{patientId}                                | ✅ | ✅| ✅ | 
+| GET /metrics/latest/{patientId}                         | ✅ | ✅| ✅ |
+| POST /metrics                                           | ✅ | ❌| ❌ |
+| -------------------------------------------------------| --------- | --------| ------------------| 
+| GET /patient-alerts                                     | ✅ | ✅| ✅ |
+| GET /patient-alerts/{id}                                | ✅ | ✅| ✅ |
+| POST /patient-alerts/{id}/ack                           | ✅ | ✅| ✅ |
+| DELETE /patient-alerts/{id}                             | ❌ | ❌| ✅ | 
+| -------------------------------------------------------| ---------| --------| ------------------|
+| GET /devices                                            | ✅ | ✅| ✅ |
+| GET /devices/{id}                                       | ✅ | ✅| ✅ |
+| GET /devices/on-patient/{id}                            | ✅ | ✅| ✅ |
+| GET /devices/counting-metrics/{patientId}               | ✅ | ✅| ✅ |
+| POST /devices                                           | ❌ | ❌| ✅ |
+| PUT /devices/{id}                                       | ❌ | ❌| ✅ |
+| DELETE /devices/{id}                                    | ❌ | ❌| ✅ |
+| POST /devices/attach                                    | ✅ | ❌| ❌ |
+| POST /devices/{id}/detach                               | ✅ | ❌| ❌ |
+| ------------------------------------------------------- | ---------| --------| ------------------|
+| Все SignalR hubs                                        | ✅ | ✅| ✅ |
+| -------------------------------------------------------| ---------| --------| ------------------|
+| POST /notifications/notify                              | ❌| ❌| ✅|
+| GET /notifications/types                                | ❌| ❌| ✅| 
+| GET /notifications/priorities                           | ❌| ❌| ✅| 
+| GET /dead-letters                                       | ❌| ❌| ✅| 
+| GET /dead-letters/unprocessed                           | ❌| ❌| ✅|
+| POST /dead-letters/{id}/process                         | ❌| ❌| ✅|
 
