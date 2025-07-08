@@ -8,6 +8,7 @@
 - `POST /identity/revoke-token` - Отзывает refresh токен (logout)
 - `POST /identity/register` - Регистрация пользователя
 - `GET /identity/validate` - Валидация JWT токена
+- `GET /identity/get-roles` - Получение списка всех ролей
 - `PUT /identity/update-password` - Смена пароля (требует авторизацию)
 
 ### Восстановление пароля
