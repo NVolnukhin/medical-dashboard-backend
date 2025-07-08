@@ -1569,18 +1569,11 @@ components:
     ErrorResponse:
       type: object
       properties:
-        error:
-          type: string
-          description: Сообщение об ошибке
-          example: "Something went wrong"
-        message:
+        errorMessage:
           type: string
           description: Детальное сообщение об ошибке
           example: "Detailed error message"
-        statusCode:
-          type: integer
-          description: HTTP статус код
-          example: 400
+        
 
 tags:
   - name: Authentication
