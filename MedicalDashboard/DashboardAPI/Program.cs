@@ -6,6 +6,7 @@ using DashboardAPI.Hubs;
 using DashboardAPI.Repositories.Alert;
 using DashboardAPI.Repositories.Metric;
 using DashboardAPI.Repositories.Patient;
+using DashboardAPI.Repositories.Device;
 using DashboardAPI.Services;
 using DashboardAPI.Services.Kafka;
 using DashboardAPI.Services.Kafka.Consumer;
@@ -13,6 +14,7 @@ using DashboardAPI.Services.Kafka.Retry;
 using DashboardAPI.Services.Metric;
 using DashboardAPI.Services.Patient;
 using DashboardAPI.Services.SignalR;
+using DashboardAPI.Services.Device;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -41,12 +43,14 @@ builder.Services.AddDbContext<DashboardDbContext>(options =>
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IMetricRepository, MetricRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
+builder.Services.AddScoped<IDeviceRepository, DashboardAPI.Repositories.Device.DeviceRepository>();
 
 // Сервисы
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IMetricService, MetricService>();
 builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddScoped<ISignalRService, SignalRService>();
+builder.Services.AddScoped<IDeviceService, DashboardAPI.Services.Device.DeviceService>();
 builder.Services.AddSingleton<IKafkaRetryService, KafkaRetryService>();
 
 // Kafka конфигурация
