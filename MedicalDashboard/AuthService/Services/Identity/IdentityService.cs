@@ -3,6 +3,7 @@ using AuthService.Repository.User;
 using AuthService.Services.Jwt;
 using AuthService.Services.Password;
 using AuthService.Services.RefreshToken;
+using Shared;
 
 namespace AuthService.Services.Identity
 {
@@ -34,14 +35,16 @@ namespace AuthService.Services.Identity
             if (!_passwordService.ValidatePassword(password, user.Salt, user.Password))
                 throw new InvalidOperationException("Invalid email or password");
 
-            var accessToken = await _jwtBuilder.GetTokenAsync(user.Id);
+            
+            var accessToken = await _jwtBuilder.GetTokenAsync(user.Id, user.Role);
+            
             var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user, ipAddress ?? "IP not found");
             return new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken.Token,
                 Status = "SUCCESS", 
-                Role = "doctor"             //TODO: убрать хардкод
+                Role = user.Role.ToLower()
             };
         }
         
@@ -52,9 +55,8 @@ namespace AuthService.Services.Identity
 
             var token = await _refreshTokenService.RotateRefreshTokenAsync(refreshToken, ipAddress ?? "IP not found");
             var user = await _userRepository.GetById(token.UserId);
-
-            // Если 2FA не включена, возвращаем оба токена
-            var accessToken = await _jwtBuilder.GetTokenAsync(user.Id);
+            
+            var accessToken = await _jwtBuilder.GetTokenAsync(user.Id, user.Role);
             return new TokensResponse 
             {
                 AccessToken = accessToken, 
@@ -90,8 +92,10 @@ namespace AuthService.Services.Identity
 
         public async Task InsertUserAsync(AuthService.Models.User user)
         {
-            var result = await _userRepository.Users.AddAsync(user);
-
+            if (!Enum.TryParse<Role>(user.Role, ignoreCase: true, out _))
+                throw new InvalidOperationException($"Invalid role. Allowed values: {string.Join(", ", Enum.GetNames(typeof(Role)))}");
+            
+            await _userRepository.Users.AddAsync(user);
             await _userRepository.SaveChangesAsync();
         }
     }

@@ -1,4 +1,5 @@
 ﻿using AuthService.DTOs;
+using Shared;
 
 namespace AuthService.Services.Identity
 {
