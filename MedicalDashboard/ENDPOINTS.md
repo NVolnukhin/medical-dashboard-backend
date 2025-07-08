@@ -4,6 +4,8 @@
 
 ### Основные эндпоинты
 - `POST /identity/login` - Вход в систему
+- `POST /identity/refresh-token` - Обновление refresh токена
+- `POST /identity/revoke-token` - Отзывает refresh токен (logout)
 - `POST /identity/register` - Регистрация пользователя
 - `GET /identity/validate` - Валидация JWT токена
 - `PUT /identity/update-password` - Смена пароля (требует авторизацию)
