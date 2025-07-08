@@ -66,11 +66,27 @@
         "AuthenticationProviderKey": null,
         "AllowedScopes": []
       }
-    }, 
+    },
     {
       "UpstreamPathTemplate": "/identity/validate",
       "UpstreamHttpMethod": [ "GET", "OPTIONS"  ],
       "DownstreamPathTemplate": "/api/identity/validate",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-service",
+          "Port": 80
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/identity/get-roles",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS"  ],
+      "DownstreamPathTemplate": "/api/identity/get-roles",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {

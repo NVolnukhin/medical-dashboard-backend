@@ -83,6 +83,22 @@
         "AllowedScopes": []
       }
     },
+    {
+      "UpstreamPathTemplate": "/identity/get-roles",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/identity/get-roles",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5249
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": null,
+        "AllowedScopes": []
+      }
+    },
 
     // Защищённые методы (требуют JWT)
     {
