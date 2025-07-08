@@ -35,6 +35,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Middleware\Middleware.csproj" />
+      <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

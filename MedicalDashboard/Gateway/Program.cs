@@ -101,6 +101,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Миддлвейры
+app.UseMiddleware<RoleValidationMiddleware>();
+
 app.UseWebSockets();
 app.UseMiddleware<SignalRProxyMiddleware>();
 app.UseMiddleware<NotificationSignalRProxyMiddleware>();
