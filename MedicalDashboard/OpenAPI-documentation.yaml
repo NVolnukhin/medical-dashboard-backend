@@ -1352,6 +1352,373 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotificationResult'
 
+  # ========================================
+  # DEVICES ENDPOINTS
+  # ========================================
+  /devices:
+    get:
+      tags: [Devices]
+      summary: Получить список устройств
+      description: Получение списка устройств с фильтрацией по палате и статусу inUsing
+      security: [BearerAuth: []]
+      parameters:
+        - name: ward
+          in: query
+          schema:
+            type: integer
+          description: Фильтр по номеру палаты
+        - name: inUsing
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по статусу занятости
+      responses:
+        '200':
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceDto'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Devices]
+      summary: Создать устройство
+      description: Создание нового устройства
+      security: [BearerAuth: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiDeviceDto'
+      responses:
+        '201':
+          description: Устройство создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/{id}:
+    get:
+      tags: [Devices]
+      summary: Получить устройство по ID
+      description: Получение информации об устройстве по его ID
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      responses:
+        '200':
+          description: Информация об устройстве
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Devices]
+      summary: Обновить устройство
+      description: Обновление информации об устройстве
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiDeviceDto'
+      responses:
+        '200':
+          description: Устройство обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Devices]
+      summary: Удалить устройство
+      description: Удаление устройства по ID
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      responses:
+        '204':
+          description: Устройство удалено
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/on-patient/{id}:
+    get:
+      tags: [Devices]
+      summary: Получить устройства, подключённые к пациенту
+      description: Получение краткой информации об устройствах, подключённых к пациенту
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '200':
+          description: Список устройств и уникальные метрики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceShortDto'
+                  metrics:
+                    type: array
+                    items:
+                      type: string
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/counting-metrics/{patientId}:
+    get:
+      tags: [Devices]
+      summary: Получить уникальные метрики по устройствам пациента
+      description: Получение уникального массива метрик по всем устройствам, подключённым к пациенту
+      security: [BearerAuth: []]
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '200':
+          description: Уникальные метрики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metrics:
+                    type: array
+                    items:
+                      type: string
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/attach:
+    post:
+      tags: [Devices]
+      summary: Привязать устройство к пациенту
+      description: Привязка устройства к пациенту (оба id в теле)
+      security: [BearerAuth: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachDeviceDto'
+      responses:
+        '200':
+          description: Устройство привязано
+        '400':
+          description: Неверные данные или палаты не совпадают
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство или пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/{id}/detach:
+    post:
+      tags: [Devices]
+      summary: Отвязать устройство от пациента
+      description: Отвязка устройства от пациента
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      responses:
+        '200':
+          description: Устройство отвязано
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1937,6 +2304,95 @@ components:
           description: Время последней попытки доставки
           example: "2024-01-15T10:30:00Z"
 
+    # ========================================
+    # DEVICES SCHEMAS
+    # ========================================
+
+    DeviceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор устройства
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: Название устройства
+          example: "Pulse-meter 1"
+        ward:
+          type: integer
+          description: Номер палаты, к которой привязано устройство
+          example: 101
+        inUsing:
+          type: boolean
+          description: Статус устройства
+          example: "true"
+        readableMetrics:
+          type: array
+          description: Считываемые устройством метрики
+          example: ["Pulse"]
+        patientId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID пациента, к которому привязано устройство (если в использовании)
+          example: "123e4567-e89b-12d3-a456-426614174001"
+
+    ApiDeviceDto:
+      type: object
+      required:
+        - name
+        - ward
+        - readableMetrics
+      properties:
+        name:
+          type: string
+          description: Название устройства
+          example: "Pulse-meter 1"
+        ward:
+          type: integer
+          description: Номер палаты, к которой привязать устройство
+          example: 101
+        readableMetrics:
+          type: array
+          description: Считываемые метрики
+          example: ["Pulse"]
+
+    DeviceShortDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор устройства
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: Название устройства
+          example: "Pulse-meter 1"
+        readableMetrics:
+          type: array
+          description: Считываемые метрики
+          example: [ "Pulse" ]
+
+    AttachDeviceDto:
+      type: object
+      required:
+        - deviceId
+        - patientId
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: ID устройства для привязки
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        patientId:
+          type: string
+          format: uuid
+          description: ID пациента для привязки
+          example: "123e4567-e89b-12d3-a456-426614174001"
+
 tags:
   - name: Authentication
     description: Операции аутентификации и авторизации
@@ -1954,3 +2410,5 @@ tags:
     description: Отправка уведомлений
   - name: DeadLetter
     description: Обработка сообщений Dead Letter
+  - name: Devices
+    description: Управление медицинскими устройствами
