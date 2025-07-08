@@ -61,7 +61,9 @@ namespace AuthService.Controllers
                 return Ok(new LoginResponse
                 {
                     AccessToken = response.AccessToken,
-                    Status = response.Status
+                    RefreshToken = response.RefreshToken,
+                    Status = response.Status,
+                    Role = response.Role,
                 });
             }
             catch (Exception ex)
@@ -174,6 +176,44 @@ namespace AuthService.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+        
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                var tokens = await _identityService.RefreshTokenAsync(
+                    request.RefreshToken,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                return Ok(new TokensResponse
+                {
+                    AccessToken = tokens.AccessToken,
+                    RefreshToken = tokens.RefreshToken
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("revoke-token")]
+        public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                await _identityService.RevokeTokenAsync(
+                    request.RefreshToken,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                return Ok(new { message = "Токен успешно отозван" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
 
