@@ -141,3 +141,42 @@ Authorization: Bearer <jwt_token>
 - `X-Total-Count` - Общее количество
 - `X-Page` - Текущая страница
 - `X-PageSize` - Размер страницы
+
+## RBAC
+
+| Endpoint | doctor| nurse| admin (audit) | 
+|------------------------------------------|-----------|----------|---------------------| 
+| POST /identity/login| ✅| ✅| ✅|
+| POST /identity/refresh-token| ✅| ✅| ✅|
+| POST /identity/revoke-token | ✅| ✅| ✅|
+| POST /identity/register | ❌| ❌| ✅|
+| GET /identity/get-roles | ❌| ❌| ✅|
+| PUT /identity/update-password | ✅| ✅| ✅|
+| ---------------------------------------| --------- | -------- | ------------------| 
+| POST /password-recovery/request | ✅| ✅| ✅|
+| POST /password-recovery/confirm | ✅| ✅| ✅|
+| ---------------------------------------| --------- | -------- | ------------------| 
+| GET /patients| ✅ | ✅| ✅ | 
+| GET /patients/{id}| ✅ | ✅| ✅ | 
+| POST /patients | ✅ | ❌| ❌ | 
+| PUT /patients/{id}| ✅ | ❌| ❌ | 
+| DELETE /patients/{id}| ✅ | ❌| ❌ | 
+| ---------------------------------------| --------- | -------- | ------------------| 
+| GET /metrics/{patientId}| ✅ | ✅| ✅ | 
+| GET /metrics/latest/{patientId}| ✅ | ✅| ✅ |
+| POST /metrics| ✅ | ❌| ❌ |
+| ---------------------------------------| --------- | --------| ------------------| 
+| GET /patient-alerts| ✅ | ✅| ✅ |
+| GET /patient-alerts/{id}| ✅ | ✅| ✅ |
+| POST /patient-alerts/{id}/ack| ✅ | ✅| ✅ |
+| DELETE /patient-alerts/{id}| ❌ | ❌| ✅ | 
+| ---------------------------------------| ---------| --------| ------------------|
+| Все SignalR hubs | ✅ | ✅| ✅ |
+| ---------------------------------------| ---------| --------| ------------------|
+| POST /notifications/notify| ❌| ❌| ✅|
+| GET /notifications/types| ❌| ❌| ✅| 
+| GET /notifications/priorities | ❌| ❌| ✅| 
+| GET /dead-letters | ❌| ❌| ✅| 
+| GET /dead-letters/unprocessed | ❌| ❌| ✅|
+| POST /dead-letters/{id}/process | ❌| ❌| ✅|
+
