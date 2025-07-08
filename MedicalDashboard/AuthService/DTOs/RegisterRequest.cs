@@ -20,5 +20,8 @@ namespace AuthService.DTOs
         [Required(ErrorMessage = "Номер телефона обязателен")]
         [Phone]
         public string PhoneNumber { get; init; } = default!;
+        
+        [Required(ErrorMessage = "Роль обязательна")]
+        public string Role { get; init; } = default!;
     }
 }
