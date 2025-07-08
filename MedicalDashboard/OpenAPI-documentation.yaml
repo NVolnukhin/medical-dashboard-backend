@@ -94,12 +94,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Токен не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   
   /identity/revoke-token:
     post:
@@ -119,12 +113,6 @@ paths:
           description: Успешно отозван
         '400':
           description: Неверные данные
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Токен не найден
           content:
             application/json:
               schema:
