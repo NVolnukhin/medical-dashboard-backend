@@ -150,13 +150,18 @@
             }
         }
 
-        public double GenerateBMI(double? previous, double baseWeight, double height)
+        public double GenerateBMI(double? previous, double baseWeight, double? height)
         {
-            double baseBMI = baseWeight / Math.Pow(height, 2);
+            double baseHeight = height.Value;
+            if (baseHeight == 0)
+            {
+                return 0;
+            }
+            double baseBMI = baseWeight / Math.Pow(baseHeight, 2);
             try
             {
                 double currentWeight = GenerateWeight(previous, baseWeight);
-                double bmi = currentWeight / Math.Pow(height, 2);
+                double bmi = currentWeight / Math.Pow(baseHeight, 2);
                 double baseValue = previous ?? bmi;
                 return bmi;
             }

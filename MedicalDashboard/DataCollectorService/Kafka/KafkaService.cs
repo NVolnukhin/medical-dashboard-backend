@@ -96,7 +96,7 @@ namespace DataCollectorService.Kafka
                 };
 
                 await Task.WhenAll(tasks);
-                _logger.LogDebug($"Отправлено сообщение {metricName} в оба топика для пациента {patient.Name}");
+                //_logger.LogDebug($"Отправлено сообщение {metricName} в оба топика для пациента {patient.Name}");
             }
             catch (Exception ex)
             {
@@ -112,7 +112,7 @@ namespace DataCollectorService.Kafka
                     topic,
                     new Message<string, string> { Key = key, Value = message });
 
-                _logger.LogDebug($"Delivered message to {result.TopicPartitionOffset} (topic: {topic})");
+                //_logger.LogDebug($"Delivered message to {result.TopicPartitionOffset} (topic: {topic})");
             }
             catch (ProduceException<string, string> e)
             {
@@ -128,7 +128,7 @@ namespace DataCollectorService.Kafka
                     _config.RawInformationTopic,
                     new Message<string, string> { Key = key, Value = message });
 
-                _logger.LogDebug($"Delivered message to {result.TopicPartitionOffset}");
+                //_logger.LogDebug($"Delivered message to {result.TopicPartitionOffset}");
             }
             catch (ProduceException<string, string> e)
             {

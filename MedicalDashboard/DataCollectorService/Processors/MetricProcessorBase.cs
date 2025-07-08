@@ -38,7 +38,7 @@ public abstract class MetricProcessorBase : IMetricProcessor
                 double newValue = await GenerateMetricValue(patient); // ненерируем  значение
                 UpdatePatientMetric(patient, newValue); // обновляем метрику
                 await _kafkaService.SendToAllTopics(patient, metricName, newValue);
-                _logger.LogSuccess($"Generated {metricName} for {patient.Name}");
+                _logger.LogSuccess($"Generated {metricName} for {patient.Name}: {metricName} = {newValue} {GetUnit()}");
                 patient.MetricIntervals[metricName] = 0;
             }
         }
