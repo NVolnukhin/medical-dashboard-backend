@@ -4,8 +4,7 @@ stages:
 
 test:
   stage: test
-  tags: [shared] 
-  tags: [docker]
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   script:
     - echo "Проверка окружения"
     - dotnet --version || echo ".NET не установлен"
@@ -34,8 +33,9 @@ test:
 
 build:
   stage: build
-  tags: [shared]
-  tags: [docker]
+  image: docker:latest
+  services:
+    - docker:dind
   script:
     - echo "Проверка Docker"
     - docker --version || echo "Docker не установлен"
