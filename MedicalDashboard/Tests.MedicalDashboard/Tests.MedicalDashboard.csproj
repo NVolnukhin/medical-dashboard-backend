@@ -26,7 +26,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="AuthServiceTests\" />
       <Folder Include="DashboardAPITests\" />
       <Folder Include="DASTests\" />
       <Folder Include="DCSTests\" />
