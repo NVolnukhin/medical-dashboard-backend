@@ -1,0 +1,91 @@
+stages:
+  - test 
+  - build
+
+variables:
+  GIT_STRATEGY: clone
+  TAG: "latest"
+  DOTNET_VERSION: "8.0"
+
+test:
+  stage: test
+  tags: [windows]
+  script:
+    - $ErrorActionPreference = "Stop"
+    - chcp 65001 | Out-Null
+    - Write-Host "Проверка наличия dotnet"
+
+    # Проверка наличия dotnet
+    - if (!(Test-Path "C:\dotnet\dotnet.exe")) {
+        Write-Host "Установка .NET 8 SDK...";
+        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1";
+        powershell -ExecutionPolicy Bypass -File "$env:TEMP\dotnet-install.ps1" -Channel 8.0 -InstallDir "C:\dotnet";
+      }
+
+    # Добавление в PATH
+    - $env:PATH = "C:\dotnet;$env:PATH"
+    - Write-Host "Установленная версия:"
+    - C:\dotnet\dotnet.exe --version
+
+    - Write-Host "Создание папки для результатов"
+    - New-Item -ItemType Directory -Path "TestResults" -Force
+
+    - Write-Host "Восстановление зависимостей для всех проектов"
+    - C:\dotnet\dotnet.exe restore MedicalDashboard.sln
+
+    - Write-Host "Сборка всех проектов"
+    - C:\dotnet\dotnet.exe build MedicalDashboard.sln --no-restore --configuration Release
+
+    - Write-Host "Запуск тестов DashboardAPI"
+    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/DashboardAPITests/DashboardAPITests.csproj `
+        --configuration Release `
+        --verbosity normal `
+        --logger "trx;LogFileName=dashboard-api-tests.trx" `
+        --results-directory "TestResults"
+
+    - Write-Host "Запуск тестов DataAnalysisService"
+    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/DASTests/DASTests.csproj `
+        --configuration Release `
+        --verbosity normal `
+        --logger "trx;LogFileName=das-tests.trx" `
+        --results-directory "TestResults"
+
+    - Write-Host "Запуск тестов AuthService"
+    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/AuthServiceTests/AuthServiceTests.csproj `
+        --configuration Release `
+        --verbosity normal `
+        --logger "trx;LogFileName=auth-service-tests.trx" `
+        --results-directory "TestResults"
+
+    - Write-Host "Запуск тестов NotificationService"
+    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/NSTests/NSTests.csproj `
+        --configuration Release `
+        --verbosity normal `
+        --logger "trx;LogFileName=notification-service-tests.trx" `
+        --results-directory "TestResults"
+
+    - Write-Host "Запуск тестов Middleware"
+    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/MiddlewareTests/MiddlewareTests.csproj `
+        --configuration Release `
+        --verbosity normal `
+        --logger "trx;LogFileName=middleware-tests.trx" `
+        --results-directory "TestResults"
+
+  artifacts:
+    when: always
+    paths:
+      - "TestResults/*.trx"
+    reports:
+      junit: "TestResults/*.trx"
+  rules:
+    - when: always
+
+build:
+  stage: build
+  tags: [windows]
+  script:
+    - Write-Host "Current Dir:" (Get-Location)
+    - Write-Host "Сборка всех сервисов через docker-compose"
+    - docker-compose build --no-cache
+  rules:
+    - when: always
