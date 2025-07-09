@@ -4,6 +4,6 @@ namespace DataCollectorService.Observerer
 {
     public interface IObserver
     {
-        Task Update(Patient patient);
+        Task Update(List<Patient> patients);
     }
 }
