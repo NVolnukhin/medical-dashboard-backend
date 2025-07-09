@@ -20,7 +20,7 @@ namespace DataCollectorService.Worker
         private readonly List<Patient> _patients = new();
         private readonly MetricGenerationConfig _config;
         private readonly List<IMetricProcessor> _metricProcessors = new();
-        public const int BaseInterval = 30;
+        //public const int BaseInterval = 30;
 
         public WorkerService(
             IGeneratorService generator,
@@ -94,14 +94,6 @@ namespace DataCollectorService.Worker
             _observers.Remove(observer);
         }
 
-        public async Task Notify(Patient patient)
-        {
-            foreach (var observer in _observers)
-            {
-                await observer.Update(patient);
-            }
-        }
-
 
         private void ParseDataFromDTO(PatientDto patientDto, MetricDto metricDto, Patient patient)
         {
@@ -126,23 +118,26 @@ namespace DataCollectorService.Worker
                 try
                 {
                     var patientsSnapshot = _patients.ToList();
-
-                    foreach (var patient in patientsSnapshot)
-                    {
-                        foreach (var metric in patient.MetricIntervals.Keys.ToList())
-                        {
-                            patient.MetricIntervals[metric] += BaseInterval;
-                        }
-                        await Notify(patient);
-                    }
+                    //_logger.LogInformation($"ПАЦИЕНТЫ      {patientsSnapshot.Count}");
+                    await Notify(patientsSnapshot); // Уведомляем наблюдателей о всех пациентах
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Ошибка в цикле генерации");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(BaseInterval), ct);
+                await Task.Delay(TimeSpan.FromSeconds(1), ct);
             }
+        }
+
+        public async Task Notify(List<Patient> patients)
+        {
+            var tasks = new List<Task>();
+            foreach (var observer in _observers)
+            {
+                tasks.Add(observer.Update(patients));
+            }
+            await Task.WhenAll(tasks);
         }
     }
 }
