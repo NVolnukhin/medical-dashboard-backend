@@ -9,7 +9,6 @@ variables:
 
 test:
   stage: test
-  tags: [windows]
   script:
     - $ErrorActionPreference = "Stop"
     - chcp 65001 | Out-Null
@@ -31,44 +30,16 @@ test:
     - New-Item -ItemType Directory -Path "TestResults" -Force
 
     - Write-Host "Восстановление зависимостей для всех проектов"
-    - C:\dotnet\dotnet.exe restore MedicalDashboard.sln
+    - C:\dotnet\dotnet.exe restore MedicalDashboard/MedicalDashboard.sln
 
     - Write-Host "Сборка всех проектов"
-    - C:\dotnet\dotnet.exe build MedicalDashboard.sln --no-restore --configuration Release
+    - C:\dotnet\dotnet.exe build MedicalDashboard/MedicalDashboard.sln --no-restore --configuration Release
 
-    - Write-Host "Запуск тестов DashboardAPI"
-    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/DashboardAPITests/DashboardAPITests.csproj `
+    - Write-Host "Запуск всех тестов"
+    - C:\dotnet\dotnet.exe test MedicalDashboard/Tests.MedicalDashboard/Tests.MedicalDashboard.csproj `
         --configuration Release `
         --verbosity normal `
-        --logger "trx;LogFileName=dashboard-api-tests.trx" `
-        --results-directory "TestResults"
-
-    - Write-Host "Запуск тестов DataAnalysisService"
-    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/DASTests/DASTests.csproj `
-        --configuration Release `
-        --verbosity normal `
-        --logger "trx;LogFileName=das-tests.trx" `
-        --results-directory "TestResults"
-
-    - Write-Host "Запуск тестов AuthService"
-    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/AuthServiceTests/AuthServiceTests.csproj `
-        --configuration Release `
-        --verbosity normal `
-        --logger "trx;LogFileName=auth-service-tests.trx" `
-        --results-directory "TestResults"
-
-    - Write-Host "Запуск тестов NotificationService"
-    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/NSTests/NSTests.csproj `
-        --configuration Release `
-        --verbosity normal `
-        --logger "trx;LogFileName=notification-service-tests.trx" `
-        --results-directory "TestResults"
-
-    - Write-Host "Запуск тестов Middleware"
-    - C:\dotnet\dotnet.exe test Tests.MedicalDashboard/MiddlewareTests/MiddlewareTests.csproj `
-        --configuration Release `
-        --verbosity normal `
-        --logger "trx;LogFileName=middleware-tests.trx" `
+        --logger "trx;LogFileName=all-tests.trx" `
         --results-directory "TestResults"
 
   artifacts:
@@ -82,7 +53,6 @@ test:
 
 build:
   stage: build
-  tags: [windows]
   script:
     - Write-Host "Current Dir:" (Get-Location)
     - Write-Host "Сборка всех сервисов через docker-compose"
