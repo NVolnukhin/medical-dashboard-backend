@@ -9,39 +9,28 @@ variables:
 
 test:
   stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  before_script:
+    - dotnet --version
+    - pwd
+    - ls -la
   script:
-    - $ErrorActionPreference = "Stop"
-    - chcp 65001 | Out-Null
-    - Write-Host "Проверка наличия dotnet"
-
-    # Проверка наличия dotnet
-    - if (!(Test-Path "C:\dotnet\dotnet.exe")) {
-        Write-Host "Установка .NET 8 SDK...";
-        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "$env:TEMP\dotnet-install.ps1";
-        powershell -ExecutionPolicy Bypass -File "$env:TEMP\dotnet-install.ps1" -Channel 8.0 -InstallDir "C:\dotnet";
-      }
-
-    # Добавление в PATH
-    - $env:PATH = "C:\dotnet;$env:PATH"
-    - Write-Host "Установленная версия:"
-    - C:\dotnet\dotnet.exe --version
-
-    - Write-Host "Создание папки для результатов"
-    - New-Item -ItemType Directory -Path "TestResults" -Force
-
-    - Write-Host "Восстановление зависимостей для всех проектов"
-    - C:\dotnet\dotnet.exe restore MedicalDashboard/MedicalDashboard.sln
-
-    - Write-Host "Сборка всех проектов"
-    - C:\dotnet\dotnet.exe build MedicalDashboard/MedicalDashboard.sln --no-restore --configuration Release
-
-    - Write-Host "Запуск всех тестов"
-    - C:\dotnet\dotnet.exe test MedicalDashboard/Tests.MedicalDashboard/Tests.MedicalDashboard.csproj `
-        --configuration Release `
-        --verbosity normal `
-        --logger "trx;LogFileName=all-tests.trx" `
+    - echo "Восстановление зависимостей для всех проектов"
+    - dotnet restore MedicalDashboard/MedicalDashboard.sln
+    
+    - echo "Сборка всех проектов"
+    - dotnet build MedicalDashboard/MedicalDashboard.sln --no-restore --configuration Release
+    
+    - echo "Создание папки для результатов тестов"
+    - mkdir -p TestResults
+    
+    - echo "Запуск всех тестов"
+    - dotnet test MedicalDashboard/Tests.MedicalDashboard/Tests.MedicalDashboard.csproj 
+        --configuration Release 
+        --verbosity normal 
+        --logger "trx;LogFileName=all-tests.trx" 
         --results-directory "TestResults"
-
+        --no-build
   artifacts:
     when: always
     paths:
@@ -53,9 +42,15 @@ test:
 
 build:
   stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker --version
+    - pwd
+    - ls -la
   script:
-    - Write-Host "Current Dir:" (Get-Location)
-    - Write-Host "Сборка всех сервисов через docker-compose"
-    - docker-compose build --no-cache
+    - echo "Сборка всех сервисов через docker-compose"
+    - docker-compose -f MedicalDashboard/docker-compose.yml build --no-cache
   rules:
     - when: always
