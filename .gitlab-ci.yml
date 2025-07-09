@@ -4,7 +4,7 @@ stages:
 
 test:
   stage: test
-  tags: [docker]
+  tags: [shared]
   script:
     - echo "Проверка окружения"
     - dotnet --version || echo ".NET не установлен"
@@ -33,7 +33,7 @@ test:
 
 build:
   stage: build
-  tags: [docker]
+  tags: [shared]
   script:
     - echo "Проверка Docker"
     - docker --version || echo "Docker не установлен"
