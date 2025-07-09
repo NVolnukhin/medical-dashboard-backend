@@ -9,6 +9,7 @@ using AuthService.Services.User;
 using FluentResults;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Unit.Services;
 

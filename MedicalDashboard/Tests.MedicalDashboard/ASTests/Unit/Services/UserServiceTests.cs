@@ -7,6 +7,7 @@ using AuthService.Services.Password;
 using AuthService.Services.User;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Unit.Services;
 

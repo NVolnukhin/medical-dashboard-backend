@@ -5,6 +5,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Unit.Controllers;
 

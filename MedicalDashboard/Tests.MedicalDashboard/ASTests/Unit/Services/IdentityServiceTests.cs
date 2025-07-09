@@ -7,6 +7,7 @@ using AuthService.Services.RefreshToken;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Moq;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Unit.Services;
 

@@ -8,6 +8,7 @@ using NotificationService.Enums;
 using NotificationService.Services.DeadLetter;
 using NotificationService.Services.Notification;
 using NotificationService.Services.Queue;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Services
 {

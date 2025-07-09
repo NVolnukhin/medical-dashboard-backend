@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NotificationService.Services.Consumer;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Services
 {

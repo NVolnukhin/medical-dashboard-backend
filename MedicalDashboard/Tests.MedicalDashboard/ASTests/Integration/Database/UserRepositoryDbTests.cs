@@ -2,6 +2,7 @@
 using AuthService.Repository.User;
 using Microsoft.EntityFrameworkCore;
 using Shared;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Integration.Database;
 public class UserRepositoryDbTests

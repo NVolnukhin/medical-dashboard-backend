@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using NotificationService.Config;
 using NotificationService.Services.Retry;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Services
 {

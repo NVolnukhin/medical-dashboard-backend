@@ -1,6 +1,7 @@
 using AuthService.Models;
 using AuthService.Repository.PasswordRecovery;
 using Microsoft.EntityFrameworkCore;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Integration.Database;
 

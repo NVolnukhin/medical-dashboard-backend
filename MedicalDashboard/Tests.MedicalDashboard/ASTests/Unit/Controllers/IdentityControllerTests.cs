@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Unit.Controllers;
 public class IdentityControllerTests

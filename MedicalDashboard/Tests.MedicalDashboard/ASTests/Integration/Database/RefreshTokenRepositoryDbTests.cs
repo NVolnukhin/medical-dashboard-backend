@@ -1,6 +1,7 @@
 using AuthService.Models;
 using AuthService.Repository.RefreshToken;
 using Microsoft.EntityFrameworkCore;
+using Xunit;
 
 namespace Tests.MedicalDashboard.ASTests.Integration.Database;
 

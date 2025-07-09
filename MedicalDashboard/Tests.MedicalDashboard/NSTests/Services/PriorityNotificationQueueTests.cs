@@ -3,6 +3,7 @@ using Moq;
 using NotificationService.Data.Models;
 using NotificationService.Enums;
 using NotificationService.Services.Queue;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Services
 {

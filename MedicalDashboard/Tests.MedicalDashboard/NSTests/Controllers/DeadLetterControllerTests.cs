@@ -4,6 +4,7 @@ using Moq;
 using NotificationService.Controllers;
 using NotificationService.Data.Models;
 using NotificationService.Services.DeadLetter;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Controllers
 {

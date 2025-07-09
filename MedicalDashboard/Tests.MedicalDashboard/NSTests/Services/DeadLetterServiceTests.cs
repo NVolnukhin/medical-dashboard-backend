@@ -3,6 +3,7 @@ using Moq;
 using NotificationService.Data.Models;
 using NotificationService.Repositories.DeadLetter;
 using NotificationService.Services.DeadLetter;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Services
 {

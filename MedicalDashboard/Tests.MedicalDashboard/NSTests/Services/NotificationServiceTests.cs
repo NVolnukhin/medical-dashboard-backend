@@ -4,6 +4,7 @@ using NotificationService.Data.Models;
 using NotificationService.Enums;
 using NotificationService.Interfaces;
 using NotificationService.Repositories.Template;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Services
 {

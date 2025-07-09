@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using NotificationService.Data;
 using NotificationService.Data.Models;
 using NotificationService.Repositories.DeadLetter;
+using Xunit;
 
 namespace Tests.MedicalDashboard.NSTests.Repositories
 {
