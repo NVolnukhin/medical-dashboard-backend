@@ -4,7 +4,8 @@ stages:
 
 test:
   stage: test
-  tags: [shared]
+  tags: [docker]
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   script:
     - echo "Проверка окружения"
     - dotnet --version || echo ".NET не установлен"
@@ -33,7 +34,10 @@ test:
 
 build:
   stage: build
-  tags: [shared]
+  tags: [docker]
+  image: docker:latest
+  services:
+    - docker:dind
   script:
     - echo "Проверка Docker"
     - docker --version || echo "Docker не установлен"
@@ -43,3 +47,31 @@ build:
     - docker-compose -f MedicalDashboard/docker-compose.yml build --no-cache || echo "Ошибка сборки Docker"
   rules:
     - when: always
+
+# Альтернативные варианты тегов для тестирования:
+test-alt:
+  stage: test
+  tags: [shared]
+  script:
+    - echo "Тест с shared тегом"
+    - dotnet --version
+  rules:
+    - when: manual
+
+test-alt2:
+  stage: test
+  tags: [shell]
+  script:
+    - echo "Тест с shell тегом"
+    - dotnet --version
+  rules:
+    - when: manual
+
+test-alt3:
+  stage: test
+  tags: [linux]
+  script:
+    - echo "Тест с linux  тегом"
+    - dotnet --version
+  rules:
+    - when: manual
