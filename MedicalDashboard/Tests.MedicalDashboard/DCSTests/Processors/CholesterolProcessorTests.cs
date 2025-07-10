@@ -93,7 +93,26 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
                 Times.Once);
         }
 
+        [Fact]
+        public async Task GenerateMetricValue_ReturnsAnomaly_WhenConditionMet()
+        {
+            var patient = new Patient
+            {
+                Cholesterol = new Metric { Value = 5.2 }
+            };
 
+            // Форсируем аномальное значение
+            _generatorMock
+                .Setup(g => g.GenerateCholesterol(It.IsAny<double>()))
+                .Returns(6.7); // Значение вне нормального диапазона
+
+            var result = await _processor.GenerateMetricValue(patient);
+
+            Assert.InRange(result, 6.5, 10.0); // Аномальный диапазон
+            _generatorMock.Verify(
+                g => g.GenerateCholesterol(patient.Cholesterol.Value),
+                Times.Once);
+        }
 
         [Fact]
         public void UpdatePatientMetric_UpdatesCorrectProperties()
