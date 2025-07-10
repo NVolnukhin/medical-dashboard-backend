@@ -65,14 +65,14 @@ public abstract class MetricProcessorBase : IMetricProcessor
         }
     }
 
-    protected abstract MetricType GetMetricType(); //  тип метрики
-    protected abstract int GetIntervalSeconds(); //  интервал обновления
-    protected abstract Task<double> GenerateMetricValue(Patient patient); // новое значение
-    protected abstract void UpdatePatientMetric(Patient patient, double value); // обновить метрику в пациенте
-    protected abstract double GetMetricValue(Patient patient); // текущее значение
-    protected abstract string GetUnit(); //  ед. измерения
+    public abstract MetricType GetMetricType(); //  тип метрики
+    public abstract int GetIntervalSeconds(); //  интервал обновления
+    public abstract Task<double> GenerateMetricValue(Patient patient); // новое значение
+    public abstract void UpdatePatientMetric(Patient patient, double value); // обновить метрику в пациенте
+    public abstract double GetMetricValue(Patient patient); // текущее значение
+    public abstract string GetUnit(); //  ед. измерения
 
-    protected MetricProcessorBase(IGeneratorService generator, IKafkaService kafkaService, ILogger logger)
+    public MetricProcessorBase(IGeneratorService generator, IKafkaService kafkaService, ILogger logger)
     {
         _generator = generator ?? throw new ArgumentNullException(nameof(generator));
         _kafkaService = kafkaService ?? throw new ArgumentNullException(nameof(kafkaService));
