@@ -28,7 +28,6 @@
     <ItemGroup>
       <Folder Include="DashboardAPITests\" />
       <Folder Include="DASTests\" />
-      <Folder Include="DCSTests\" />
       <Folder Include="MiddlewareTests\" />
       <Folder Include="NSTests\" />
     </ItemGroup>
