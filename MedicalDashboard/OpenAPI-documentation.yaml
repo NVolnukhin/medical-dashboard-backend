@@ -2011,11 +2011,6 @@ components:
           enum: [admin, doctor, nurse]
           description: Роль пользователя
           example: "doctor"
-        createdAt:
-          type: string
-          format: date-time
-          description: Дата создания пользователя
-          example: "2024-01-15T10:30:00Z"
 
     # ========================================
     # DASHBOARD API SCHEMAS
