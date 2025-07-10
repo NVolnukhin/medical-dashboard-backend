@@ -9,7 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddEnvironmentVariables();  
 
 builder.Services.Configure<MetricGenerationConfig>(
     builder.Configuration.GetSection("MetricGeneration"));
@@ -17,8 +19,7 @@ builder.Services.Configure<MetricGenerationConfig>(
 builder.Services.AddDbContext<DataCollectorDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.Configure<KafkaConfig>(
-    builder.Configuration.GetSection("Kafka"));
+builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection("Kafka"));
 
 builder.Services.AddSingleton<IGeneratorService, GeneratorService>();
 builder.Services.AddSingleton<IKafkaService, KafkaService>();
