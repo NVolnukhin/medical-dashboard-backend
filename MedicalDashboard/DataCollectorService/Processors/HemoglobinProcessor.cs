@@ -20,20 +20,20 @@ namespace DataCollectorService.Processors
             _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        protected override MetricType GetMetricType() => MetricType.Hemoglobin;
-        protected override int GetIntervalSeconds() => _config.HemoglobinIntervalSeconds;
-        protected override async Task<double> GenerateMetricValue(Patient patient)
+        public override MetricType GetMetricType() => MetricType.Hemoglobin;
+        public override int GetIntervalSeconds() => _config.HemoglobinIntervalSeconds;
+        public override async Task<double> GenerateMetricValue(Patient patient)
         {
             return await Task.FromResult(_generator.GenerateHemoglobin(patient.Hemoglobin.Value));
         }
 
-        protected override void UpdatePatientMetric(Patient patient, double value)
+        public override void UpdatePatientMetric(Patient patient, double value)
         {
             patient.Hemoglobin.Value = value;
             patient.Hemoglobin.LastUpdate = DateTime.UtcNow;
         }
 
-        protected override double GetMetricValue(Patient patient) => patient.Hemoglobin.Value;
-        protected override string GetUnit() => "г/л";
+        public override double GetMetricValue(Patient patient) => patient.Hemoglobin.Value;
+        public override string GetUnit() => "г/л";
     }
 }
