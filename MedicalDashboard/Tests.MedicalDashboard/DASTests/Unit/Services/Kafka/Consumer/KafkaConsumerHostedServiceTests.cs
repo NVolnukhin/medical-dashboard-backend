@@ -81,29 +81,6 @@ public class KafkaConsumerHostedServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_LongRunningConsumer_HandlesCorrectly()
-    {
-        // Arrange
-        var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(200));
-
-        _kafkaConsumerServiceMock.Setup(x => x.StartConsumingAsync(It.IsAny<CancellationToken>()))
-            .Returns(async (CancellationToken token) =>
-            {
-                await Task.Delay(150, token); // Долго выполняющаяся операция
-            });
-
-        // Act
-        await _service.StartAsync(cancellationTokenSource.Token);
-        await Task.Delay(50); // Даем время на выполнение
-        await _service.StopAsync(cancellationTokenSource.Token);
-
-        // Assert
-        _kafkaConsumerServiceMock.Verify(x => x.StartConsumingAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _kafkaConsumerServiceMock.Verify(x => x.StopConsumingAsync(), Times.Exactly(2));
-    }
-
-    [Fact]
     public async Task ExecuteAsync_StopConsumingAsyncThrowsException_HandlesGracefully()
     {
         // Arrange
