@@ -19,20 +19,20 @@ namespace DataCollectorService.Processors
             _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        protected override MetricType GetMetricType() => MetricType.Pulse;
-        protected override int GetIntervalSeconds() => _config.PulseIntervalSeconds;
-        protected override async Task<double> GenerateMetricValue(Patient patient)
+        public override MetricType GetMetricType() => MetricType.Pulse;
+        public override int GetIntervalSeconds() => _config.PulseIntervalSeconds;
+        public override async Task<double> GenerateMetricValue(Patient patient)
         {
             return await Task.FromResult(_generator.GeneratePulse(patient.Pulse.Value));
         }
 
-        protected override void UpdatePatientMetric(Patient patient, double value)
+        public override void UpdatePatientMetric(Patient patient, double value)
         {
             patient.Pulse.Value = value;
             patient.Pulse.LastUpdate = DateTime.UtcNow;
         }
 
-        protected override double GetMetricValue(Patient patient) => patient.Pulse.Value;
-        protected override string GetUnit() => "уд./мин";
+        public override double GetMetricValue(Patient patient) => patient.Pulse.Value;
+        public override string GetUnit() => "уд./мин";
     }
 }

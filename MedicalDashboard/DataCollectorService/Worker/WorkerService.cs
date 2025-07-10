@@ -44,7 +44,7 @@ namespace DataCollectorService.Worker
             _patients = InitPatients();
         }
 
-        private List<Patient> InitPatients()
+        public List<Patient> InitPatients()
         {
             var patients = new List<Patient>();
             var dtos = _dbContext.Patients
@@ -75,7 +75,7 @@ namespace DataCollectorService.Worker
             return patients;
         }
 
-        private static int CalculateAge(DateTime birthDate)
+        public static int CalculateAge(DateTime birthDate)
         {
             var today = DateTime.Today;
             var age = today.Year - birthDate.Year;
@@ -95,7 +95,7 @@ namespace DataCollectorService.Worker
         }
 
 
-        private void ParseDataFromDTO(PatientDto patientDto, MetricDto metricDto, Patient patient)
+        public void ParseDataFromDTO(PatientDto patientDto, MetricDto metricDto, Patient patient)
         {
             patient.Age = DateTime.Now.Year - patientDto.BirthDate.Year;
             patient.Height = patientDto.Height;
