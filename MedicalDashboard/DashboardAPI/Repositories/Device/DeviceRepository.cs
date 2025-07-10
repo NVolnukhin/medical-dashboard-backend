@@ -81,11 +81,14 @@ public class DeviceRepository : IDeviceRepository
     public async Task<IEnumerable<string>> GetCountingMetricsAsync()
     {
         // Только по тем, что привязаны к пациентам
-        var metrics = await _context.Devices
+        var devices = await _context.Devices
             .Where(d => d.BusyBy != null)
+            .ToListAsync();
+        
+        var metrics = devices
             .SelectMany(d => d.ReadableMetrics)
             .Distinct()
-            .ToListAsync();
+            .ToList();
         return metrics;
     }
 } 

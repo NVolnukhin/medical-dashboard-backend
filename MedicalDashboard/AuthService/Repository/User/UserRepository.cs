@@ -33,11 +33,13 @@ namespace AuthService.Repository.User
 
         public async Task UpdatePassword(Guid userId, string newPasswordHash, string newSalt)
         {
-            await _authorizationAppContext.Users
-                .Where(u => u.Id == userId)
-                .ExecuteUpdateAsync(u => u
-                    .SetProperty(p => p.Password, newPasswordHash)
-                    .SetProperty(s => s.Salt, newSalt));
+            var user = await _authorizationAppContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null)
+            {
+                user.Password = newPasswordHash;
+                user.Salt = newSalt;
+                await _authorizationAppContext.SaveChangesAsync();
+            }
         }
     }
 }

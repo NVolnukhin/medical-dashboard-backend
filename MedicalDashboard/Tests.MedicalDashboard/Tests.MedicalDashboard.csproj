@@ -27,11 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="AuthServiceTests\" />
       <Folder Include="DashboardAPITests\" />
       <Folder Include="DASTests\" />
-      <Folder Include="DCSTests\Kafka\" />
-      <Folder Include="DCSTests\Observer\" />
       <Folder Include="MiddlewareTests\" />
       <Folder Include="NSTests\" />
     </ItemGroup>
