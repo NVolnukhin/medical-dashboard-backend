@@ -125,7 +125,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
 
             _generatorMock
                 .Setup(g => g.GenerateDiastolicPressure())
-                .Returns();
+                .Returns(newPressure);
 
             _kafkaServiceMock
                 .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
