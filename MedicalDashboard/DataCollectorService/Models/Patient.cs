@@ -4,7 +4,7 @@
     {
         public Guid Id { get; set;  } = Guid.NewGuid();
         public int Age { get; set; }
-        public Dictionary<string, int> MetricIntervals = new Dictionary<string, int>();
+        public Dictionary<string, DateTime> MetricLastGenerations = new Dictionary<string, DateTime>();
         public string? Sex { get; set; }
         public string? Name { get; set; }
         public int? Ward {  get; set; }
@@ -37,19 +37,19 @@
 
         public void InitializeIntervals()
         {
-            MetricIntervals = new Dictionary<string, int>()
+            var now = DateTime.UtcNow;
+            MetricLastGenerations = new Dictionary<string, DateTime>()
             {
-                ["Pulse"] = 0, // Либо _random.Next(0, _config.HeartRateIntervalSeconds),
-                                   // чтобы метрики генерировались не одновременно и везде так же
-                ["Saturation"] = 0,
-                ["Weight"] = 0,
-                ["BMI"] = 0,
-                ["Hemoglobin"] = 0,
-                ["Cholesterol"] = 0,
-                ["SysPressure"] = 0,
-                ["DiasPressure"] = 0,
-                ["Temperature"] = 0,
-                ["Respiration"] = 0
+                ["Pulse"] = now,
+                ["Saturation"] = now,
+                ["Weight"] = now,
+                ["BMI"] = now,
+                ["Hemoglobin"] = now,
+                ["Cholesterol"] = now,
+                ["SysPressure"] = now,
+                ["DiasPressure"] = now,
+                ["Temperature"] = now,
+                ["Respiration"] = now
             };
         }
     }
