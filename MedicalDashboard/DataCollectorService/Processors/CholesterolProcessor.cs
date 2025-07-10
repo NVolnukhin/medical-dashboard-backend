@@ -20,20 +20,20 @@ namespace DataCollectorService.Processors
             _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         }
 
-        protected override MetricType GetMetricType() => MetricType.Cholesterol;
-        protected override int GetIntervalSeconds() => _config.CholesterolIntervalSeconds;
-        protected override async Task<double> GenerateMetricValue(Patient patient)
+        public override MetricType GetMetricType() => MetricType.Cholesterol;
+        public override int GetIntervalSeconds() => _config.CholesterolIntervalSeconds;
+        public override async Task<double> GenerateMetricValue(Patient patient)
         {
             return await Task.FromResult(_generator.GenerateCholesterol(patient.Cholesterol.Value));
         }
 
-        protected override void UpdatePatientMetric(Patient patient, double value)
+        public override void UpdatePatientMetric(Patient patient, double value)
         {
             patient.Cholesterol.Value = value;
             patient.Cholesterol.LastUpdate = DateTime.UtcNow;
         }
 
-        protected override double GetMetricValue(Patient patient) => patient.Cholesterol.Value;
-        protected override string GetUnit() => "ммоль/л";
+        public override double GetMetricValue(Patient patient) => patient.Cholesterol.Value;
+        public override string GetUnit() => "ммоль/л";
     }
 }

@@ -6,6 +6,6 @@ namespace DataCollectorService.Observerer
     {
         void Attach(IObserver observer);
         void Detach(IObserver observer);
-        Task Notify(Patient patient);
+        Task Notify(List<Patient> patients);
     }
 }

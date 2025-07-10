@@ -5,7 +5,7 @@ namespace DataCollectorService.Processors
 {
     public interface IMetricProcessor : IObserver
     {
-        Task Generate(Patient patient);
+        public Task ProcessPatientMetric(Patient patient, string metricName, DateTime now);
         void Log(Patient patient, ILogger logger);
     }
 }

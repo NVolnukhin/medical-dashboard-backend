@@ -19,20 +19,20 @@ public class WeightProcessor : MetricProcessorBase
         _config = config.Value ?? throw new ArgumentNullException(nameof(config));
     }
 
-    protected override MetricType GetMetricType() => MetricType.Weight; // тип метрики
-    protected override int GetIntervalSeconds() => _config.WeightIntervalSeconds; // интервал из конфига
-    protected override async Task<double> GenerateMetricValue(Patient patient)
+    public override MetricType GetMetricType() => MetricType.Weight; // тип метрики
+    public override int GetIntervalSeconds() => _config.WeightIntervalSeconds; // интервал из конфига
+    public override async Task<double> GenerateMetricValue(Patient patient)
     {
         return await Task.FromResult(_generator.GenerateWeight(patient.Weight.Value, patient.BaseWeight)); // генерация 
     }
 
-    protected override void UpdatePatientMetric(Patient patient, double value)
+    public override void UpdatePatientMetric(Patient patient, double value)
     {
         patient.Weight.Value = value; // обновление значения
         patient.Weight.LastUpdate = DateTime.UtcNow; // рбновление времени
         //_logger.LogInformation($"ВЕС ПАЦИЕНТА {patient.Weight.Value}");
     }
 
-    protected override double GetMetricValue(Patient patient) => patient.Weight.Value; //  текущее значение
-    protected override string GetUnit() => "кг"; // ед. измер
+    public override double GetMetricValue(Patient patient) => patient.Weight.Value; //  текущее значение
+    public override string GetUnit() => "кг"; // ед. измер
 }
