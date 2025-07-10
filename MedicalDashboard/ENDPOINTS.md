@@ -9,6 +9,7 @@
 - `POST /identity/register` - Регистрация пользователя
 - `GET /identity/validate` - Валидация JWT токена
 - `GET /identity/get-roles` - Получение списка всех ролей
+- `GET /identity/users` - Получение списка всех пользователей (требует роль admin)
 - `PUT /identity/update-password` - Смена пароля (требует авторизацию)
 
 ### Восстановление пароля
@@ -162,6 +163,7 @@ Authorization: Bearer <jwt_token>
 | POST /identity/revoke-token                             | ✅| ✅| ✅|
 | POST /identity/register                                 | ❌| ❌| ✅|
 | GET /identity/get-roles                                 | ❌| ❌| ✅|
+| GET /identity/users                                     | ❌| ❌| ✅|
 | PUT /identity/update-password                           | ✅| ✅| ✅|
 | -------------------------------------------------------| --------- | -------- | ------------------| 
 | POST /password-recovery/request                         | ✅| ✅| ✅|

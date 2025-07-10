@@ -252,6 +252,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /identity/users:
+    get:
+      tags:
+        - Authentication
+      summary: Получение списка всех пользователей
+      description: >
+        Возвращает список всех пользователей системы с пагинацией и фильтрацией.
+        Доступно только для администраторов.
+      operationId: getUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Номер страницы
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Размер страницы
+        - name: emailFilter
+          in: query
+          schema:
+            type: string
+          description: Фильтр по email (поиск по подстроке)
+        - name: roleFilter
+          in: query
+          schema:
+            type: string
+            enum: [admin, doctor, nurse]
+          description: Фильтр по роли
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserListResponse'
+                  totalCount:
+                    type: integer
+                    description: Общее количество пользователей
+                  page:
+                    type: integer
+                    description: Текущая страница
+                  pageSize:
+                    type: integer
+                    description: Размер страницы
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /identity/update-password:
     put:
       tags:
@@ -1888,6 +1969,53 @@ components:
           type: string
           description: Сообщение о результате операции
           example: "Password recovery email sent"
+
+    UserListResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор пользователя
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        firstName:
+          type: string
+          nullable: true
+          description: Имя пользователя
+          example: "Иван"
+        lastName:
+          type: string
+          nullable: true
+          description: Фамилия пользователя
+          example: "Иванов"
+        middleName:
+          type: string
+          nullable: true
+          description: Отчество пользователя
+          example: "Иванович"
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+          example: "user@example.com"
+        phoneNumber:
+          type: string
+          description: Номер телефона
+          example: "+7 (999) 123-45-67"
+        isActive:
+          type: boolean
+          description: Статус активности пользователя
+          example: true
+        role:
+          type: string
+          enum: [admin, doctor, nurse]
+          description: Роль пользователя
+          example: "doctor"
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания пользователя
+          example: "2024-01-15T10:30:00Z"
 
     # ========================================
     # DASHBOARD API SCHEMAS

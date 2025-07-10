@@ -11,5 +11,6 @@ namespace AuthService.Services.Identity
         Task<LoginResponse> LoginAsync(string email, string password, string? ipAddress);
         Task<TokensResponse> RefreshTokenAsync(string refreshToken, string? ipAddress);
         Task RevokeTokenAsync(string refreshToken, string? ipAddress);
+        Task<(IEnumerable<AuthService.Models.User> Users, int TotalCount)> GetUsersAsync(int page = 1, int pageSize = 20, string? emailFilter = null, string? roleFilter = null);
     }
 }

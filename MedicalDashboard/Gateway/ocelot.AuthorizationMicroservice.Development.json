@@ -117,6 +117,22 @@
         "AllowedScopes": []
       }
     },
+    {
+      "UpstreamPathTemplate": "/identity/users",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+      "DownstreamPathTemplate": "/api/identity/users",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5249
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
 
 
     // ----- PASSWORD RECOVERY CONTROLLER ----- //

@@ -98,5 +98,13 @@ namespace AuthService.Services.Identity
             await _userRepository.Users.AddAsync(user);
             await _userRepository.SaveChangesAsync();
         }
+
+        public async Task<(IEnumerable<AuthService.Models.User> Users, int TotalCount)> GetUsersAsync(int page = 1, int pageSize = 20, string? emailFilter = null, string? roleFilter = null)
+        {
+            var users = await _userRepository.GetAllAsync(page, pageSize, emailFilter, roleFilter);
+            var totalCount = await _userRepository.GetTotalCountAsync(emailFilter, roleFilter);
+            
+            return (users, totalCount);
+        }
     }
 }

@@ -234,6 +234,42 @@ namespace AuthService.Controllers
             return Ok(roles);
         }
 
+        [HttpGet("users")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? emailFilter = null, [FromQuery] string? roleFilter = null)
+        {
+            try
+            {
+                var (users, totalCount) = await _identityService.GetUsersAsync(page, pageSize, emailFilter, roleFilter);
+                
+                var response = users.Select(u => new UserListResponse
+                {
+                    Id = u.Id,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    MiddleName = u.MiddleName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    IsActive = u.IsActive,
+                    Role = u.Role
+                });
+
+                return Ok(new
+                {
+                    Users = response,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogFailure("Ошибка при получении списка пользователей", ex);
+                return StatusCode(500, "Произошла непредвиденная ошибка");
+            }
+        }
+
         private Guid GetUserIdFromClaims()
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == "userId" || c.Type == ClaimTypes.NameIdentifier)?.Value;

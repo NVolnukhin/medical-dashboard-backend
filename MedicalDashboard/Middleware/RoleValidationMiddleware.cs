@@ -41,6 +41,17 @@ public class RoleValidationMiddleware
             await context.Response.WriteAsJsonAsync(new { error = "Role claim is required" });
             return;
         }
+        
+        // Проверяем доступ ( /identity )
+        if (context.Request.Path.StartsWithSegments("/identity") && 
+            role != "admin")
+        {
+            _logger.LogWarning($"Access denied. Required role: 'admin', Actual role: '{role}'");
+            
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsJsonAsync(new { error = "Requires admin role" });
+            return;
+        }
 
         // Проверяем доступ ( /notifications )
         if (context.Request.Path.StartsWithSegments("/notifications") && 

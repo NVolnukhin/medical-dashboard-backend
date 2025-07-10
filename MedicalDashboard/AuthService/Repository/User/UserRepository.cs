@@ -39,5 +39,43 @@ namespace AuthService.Repository.User
                     .SetProperty(p => p.Password, newPasswordHash)
                     .SetProperty(s => s.Salt, newSalt));
         }
+
+        public async Task<IEnumerable<AuthService.Models.User>> GetAllAsync(int page = 1, int pageSize = 20, string? emailFilter = null, string? roleFilter = null)
+        {
+            var query = _authorizationAppContext.Users.AsNoTracking();
+
+            if (!string.IsNullOrEmpty(emailFilter))
+            {
+                query = query.Where(u => u.Email.Contains(emailFilter));
+            }
+
+            if (!string.IsNullOrEmpty(roleFilter))
+            {
+                query = query.Where(u => u.Role == roleFilter);
+            }
+
+            return await query
+                .OrderBy(u => u.Email)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetTotalCountAsync(string? emailFilter = null, string? roleFilter = null)
+        {
+            var query = _authorizationAppContext.Users.AsNoTracking();
+
+            if (!string.IsNullOrEmpty(emailFilter))
+            {
+                query = query.Where(u => u.Email.Contains(emailFilter));
+            }
+
+            if (!string.IsNullOrEmpty(roleFilter))
+            {
+                query = query.Where(u => u.Role == roleFilter);
+            }
+
+            return await query.CountAsync();
+        }
     }
 }
