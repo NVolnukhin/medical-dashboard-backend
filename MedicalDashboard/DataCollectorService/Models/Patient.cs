@@ -46,10 +46,10 @@
                 ["BMI"] = now,
                 ["Hemoglobin"] = now,
                 ["Cholesterol"] = now,
-                ["SysPressure"] = now,
-                ["DiasPressure"] = now,
+                ["SystolicPressure"] = now,
+                ["DiastolicPressure"] = now,
                 ["Temperature"] = now,
-                ["Respiration"] = now
+                ["RespirationRate"] = now
             };
         }
     }
