@@ -200,6 +200,7 @@ public class DataAnalysisService : IDataAnalysisService
         {
             var patientName = await _patientService.GetPatientFullNameAsync(patientId);
             
+            // для WebPush
             var alertMessage = new PatientAlertMessage
             {
                 PatientId = patientId.ToString(),
@@ -210,6 +211,18 @@ public class DataAnalysisService : IDataAnalysisService
 
             await _kafkaProducerService.ProduceAsync("md-alerts", alertMessage);
 
+            var telegramMessage = new
+            {
+                Type = 3,
+                Recipient = "some@recepient.com",
+                Subject = "❗❗❗  ВНИМАНИЕ  ❗❗❗",
+                Body = $"У пациента {patientName} показатель {indicator} выходит за референсные значения",
+                Priority = 0
+            };
+            
+            await _kafkaProducerService.ProduceAsync("md-emails", telegramMessage);
+            
+            // Сохраняем в БД            
             var alertDto = new AlertDto
             {
                 Id = Guid.NewGuid(),
