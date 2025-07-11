@@ -18,6 +18,7 @@ using NotificationService.Repositories.DeadLetter;
 using NotificationService.Repositories.Template;
 using NotificationService.Services.DeadLetter;
 using NotificationService.WebPush.Sender;
+using NotificationService.Telegram.Sender;
 using Shared;
 using Shared.Extensions.Logging;
 
@@ -78,6 +79,7 @@ builder.Services.AddSignalR();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
 builder.Services.Configure<RetrySettings>(builder.Configuration.GetSection("RetrySettings"));
+builder.Services.Configure<TelegramSettings>(builder.Configuration.GetSection("TelegramSettings"));
 
 // Регистрация настроек как синглтоны
 builder.Services.AddSingleton<KafkaSettings>(sp => 
@@ -136,9 +138,13 @@ builder.Services.AddScoped<INotificationTemplateRepository, NotificationTemplate
 builder.Services.AddScoped<IDeadLetterRepository, DeadLetterRepository>();
 
 
+// Регистрация HttpClient для Telegram
+builder.Services.AddHttpClient();
+
 // Регистрация сервисов
 builder.Services.AddSingleton<INotificationSender, EmailNotificationSender>();
 builder.Services.AddSingleton<INotificationSender, WebPushNotificationSender>();
+builder.Services.AddSingleton<INotificationSender, TelegramNotificationSender>();
 builder.Services.AddSingleton<IRetryService, RetryService>();
 builder.Services.AddScoped<IDeadLetterService, DeadLetterService>();
 builder.Services.AddScoped<INotificationService, NotificationService.Services.Notification.NotificationService>();
