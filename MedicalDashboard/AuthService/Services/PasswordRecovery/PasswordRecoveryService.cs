@@ -74,7 +74,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
                     TemplateParameters = new Dictionary<string, string>
                     {
                         { "userName", $"{user.FirstName} {user.LastName}" },
-                        { "recoveryLink", $"our_domen/recover-password?token={token.Token}" },              //TODO: REAL LINK
+                        { "recoveryLink", $"http://localhost:5173/recover-password?token={token.Token}" },
                         { "hoursValid", "12" }
                     }
                 };
