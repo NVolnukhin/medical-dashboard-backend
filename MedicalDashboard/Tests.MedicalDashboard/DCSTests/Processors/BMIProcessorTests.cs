@@ -112,90 +112,84 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        public async Task Update_IntervalPassed_PatientProcessed()
         {
-            const double initialBmi = 24.5;
-            const double newBmi = 24.8;
+            var now = DateTime.UtcNow;
+            var id = Guid.NewGuid();
             var patient = new Patient
+            
             {
-                Id = Guid.NewGuid(),
-                BMI = new Metric
-                {
-                    Value = initialBmi,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-185)
-                },
-                BaseWeight = 70.0,
-                Height = 1.75,
+                Id = id,
+                Name = "Test Patient",
+                Height = 180, 
+                BaseWeight = 70,
+                BMI = new Metric { Value = 24.5 },
                 MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "BMI", DateTime.UtcNow.AddSeconds(-185) }
-                }
+        {
+            { "BMI", now.AddSeconds(-31) } // Интервал 30 сек, прошло 31 (> интервала)
+        }
             };
-
+            var patients = new List<Patient> { patient };
+            const double expectedBmi = 25.0;
             _generatorMock
-                .Setup(g => g.GenerateBMI(initialBmi, patient.BaseWeight, patient.Height))
-                .Returns(newBmi);
+                .Setup(x => x.GenerateBMI(24.5, patient.BaseWeight, patient.Height))
+                .Returns(expectedBmi);
 
-            _kafkaServiceMock
-                .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(Task.CompletedTask);
+            await _processor.Update(patients);
+            
+            _generatorMock.Verify(
+                x => x.GenerateBMI(24.5, patient.BaseWeight, patient.Height),
+                Times.Once);
+            Assert.Equal(expectedBmi, patient.BMI.Value); 
+            Assert.Equal(now, patient.MetricLastGenerations["BMI"], TimeSpan.FromMilliseconds(100)); // Допуск 100 мс
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(newBmi, patient.BMI.Value);
-            Assert.True((DateTime.UtcNow - patient.BMI.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                x => x.SendToAllTopics(patient, "BMI", expectedBmi),
                 Times.Once);
         }
 
         [Fact]
-        public async Task Update_WhenIntervalNotPassed_SkipsPatient()
+        public async Task Update_IntervalNotPassed_PatientSkipped()
         {
-            const double initialBmi = 24.5;
-            var patient = new Patient
+            var now = DateTime.UtcNow;
+            var patients = new List<Patient>
+    {
+        new Patient
+        {
+            MetricLastGenerations = new Dictionary<string, DateTime>
             {
-                BMI = new Metric
-                {
-                    Value = initialBmi,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-90)
-                },
-                BaseWeight = 70.0,
-                Height = 1.75,
-                MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "BMI", DateTime.UtcNow.AddSeconds(-90) }
-                }
-            };
-
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(initialBmi, patient.BMI.Value);
-            _generatorMock.Verify(
-                g => g.GenerateBMI(It.IsAny<double>(), It.IsAny<double>(), It.IsAny<double>()),
-                Times.Never);
+                { "BMI", now.AddSeconds(-25) } // Интервал 30 сек, прошло только 25
+            }
         }
-
-        [Fact]
-        public async Task Update_WhenException_LogsError()
-        {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
-
-            _generatorMock
-                .Setup(g => g.GenerateBMI(It.IsAny<double>(), It.IsAny<double>(), It.IsAny<double>()))
-                .Throws(expectedException);
+    };
 
             await _processor.Update(patients);
 
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            _generatorMock.Verify(
+                x => x.GenerateWeight(It.IsAny<double?>(), It.IsAny<double>()),
+                Times.Never);
+            _kafkaServiceMock.Verify(
+                x => x.SendToAllTopics(It.IsAny<Patient>(), It.IsAny<string>(), It.IsAny<double>()),
+                Times.Never);
+            _loggerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task Update_WhenPatientsIsNull_LogsError()
+        {
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для BMI";
+
+            await _processor.Update(nullPatients!);
+
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]

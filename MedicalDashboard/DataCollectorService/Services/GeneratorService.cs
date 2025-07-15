@@ -111,7 +111,7 @@
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка считывания диастолического давления");
-                return 120;
+                return 80;
             }
         }
 

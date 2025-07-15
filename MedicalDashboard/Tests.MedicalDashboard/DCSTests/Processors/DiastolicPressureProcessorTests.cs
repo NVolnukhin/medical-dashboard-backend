@@ -104,39 +104,87 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             Assert.True(patient.DiastolicPressure.LastUpdate <= afterUpdate);
         }
 
+        //[Fact]
+        //public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        //{
+        //    const double initialPressure = 70.0;
+        //    const double newPressure = 75.0;
+        //    var patient = new Patient
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        DiastolicPressure = new Metric
+        //        {
+        //            Value = initialPressure,
+        //            LastUpdate = DateTime.UtcNow.AddSeconds(-70) // Больше интервала (60s)
+        //        },
+        //        MetricLastGenerations = new Dictionary<string, DateTime>
+        //        {
+        //            { "DiastolicPressure", DateTime.UtcNow.AddSeconds(-70) }
+        //        }
+        //    };
+
+        //    _generatorMock
+        //        .Setup(g => g.GenerateDiastolicPressure())
+        //        .Returns(newPressure);
+
+        //    _kafkaServiceMock
+        //        .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
+        //        .Returns(Task.CompletedTask);
+
+        //    await _processor.Update(new List<Patient> { patient });
+
+        //    Assert.Equal(newPressure, patient.DiastolicPressure.Value);
+        //    Assert.True((DateTime.UtcNow - patient.DiastolicPressure.LastUpdate).TotalSeconds < 1);
+        //    _kafkaServiceMock.Verify(
+        //        k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+        //        Times.Once);
+        //}
+
         [Fact]
-        public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        public async Task Update_WhenIntervalPassed_ProcessesPatient()
         {
-            const double initialPressure = 70.0;
-            const double newPressure = 75.0;
+            // Arrange
+            var now = DateTime.UtcNow;
+            var id = Guid.NewGuid();
             var patient = new Patient
             {
-                Id = Guid.NewGuid(),
-                DiastolicPressure = new Metric
-                {
-                    Value = initialPressure,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-70) // Больше интервала (60s)
-                },
+                Id = id,
+                Name = "Test Patient",
                 MetricLastGenerations = new Dictionary<string, DateTime>
                 {
-                    { "DiastolicPressure", DateTime.UtcNow.AddSeconds(-70) }
-                }
+                    ["DiastolicPressure"] = now.AddSeconds(-61) // Интервал 60 секунд - прошло 61
+                },
+                DiastolicPressure = new Metric { Value = 70 } // Старое значение
             };
+            var patients = new List<Patient> { patient };
 
-            _generatorMock
-                .Setup(g => g.GenerateDiastolicPressure())
-                .Returns(newPressure);
+            double generatedValue = 85;
+            _generatorMock.Setup(g => g.GenerateDiastolicPressure()).Returns(generatedValue);
 
-            _kafkaServiceMock
-                .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(Task.CompletedTask);
+            // Act
+            await _processor.Update(patients);
 
-            await _processor.Update(new List<Patient> { patient });
+            // Assert
+            // Проверка генерации
+            _generatorMock.Verify(g => g.GenerateDiastolicPressure(), Times.Once);
 
-            Assert.Equal(newPressure, patient.DiastolicPressure.Value);
-            Assert.True((DateTime.UtcNow - patient.DiastolicPressure.LastUpdate).TotalSeconds < 1);
+            // Проверка обновления пациента
+            Assert.Equal(generatedValue, patient.DiastolicPressure.Value);
+            Assert.InRange(patient.DiastolicPressure.LastUpdate, now.AddSeconds(-1), now.AddSeconds(1));
+            Assert.InRange(patient.MetricLastGenerations["DiastolicPressure"], now.AddSeconds(-1), now.AddSeconds(1));
+
+            // Проверка отправки в Kafka
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, "DiastolicPressure", generatedValue),
+                Times.Once);
+
+            // Проверка логгирования успеха
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString().Contains($"Generated DiastolicPressure for {patient.Name}")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
         }
 
@@ -166,25 +214,24 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
+            // Arrange
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для DiastolicPressure";
 
-            _generatorMock
-                .Setup(g => g.GenerateDiastolicPressure())
-                .Throws(expectedException);
+            // Act
+            await _processor.Update(nullPatients!);
 
-            await _processor.Update(patients);
-
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]

@@ -108,86 +108,89 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        public async Task Update_IntervalPassed_PatientProcessed()
         {
+            var now = DateTime.UtcNow;
             const double initialTemperature = 36.6;
-            const double newTemperature = 37.1;
+            var id = Guid.NewGuid();
             var patient = new Patient
             {
-                Id = Guid.NewGuid(),
-                Temperature = new Metric
-                {
-                    Value = initialTemperature,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-70) // Больше интервала (60s)
-                },
+                Id = id,
+                Name = "Test Patient",
+                Temperature = new Metric { Value = initialTemperature },
                 MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "Temperature", DateTime.UtcNow.AddSeconds(-70) }
-                }
+        {
+            { "Temperature", now.AddSeconds(-61) }
+        }
             };
 
+            var patients = new List<Patient> { patient };
+            const double generatedTemperature = 37.1;
+
             _generatorMock
-                .Setup(g => g.GenerateTemperature(initialTemperature))
-                .Returns(newTemperature);
+                .Setup(x => x.GenerateTemperature(It.IsAny<double?>()))
+                .Returns(generatedTemperature);
 
-            _kafkaServiceMock
-                .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(Task.CompletedTask);
+            await _processor.Update(patients);
+            _generatorMock.Verify(
+                x => x.GenerateTemperature(initialTemperature),
+                Times.Once);
+            Assert.Equal(generatedTemperature, patient.Temperature.Value);
+            Assert.Equal(now, patient.MetricLastGenerations["Temperature"], TimeSpan.FromMilliseconds(100));
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(newTemperature, patient.Temperature.Value);
-            Assert.True((DateTime.UtcNow - patient.Temperature.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                x => x.SendToAllTopics(patient, "Temperature", generatedTemperature),
                 Times.Once);
         }
 
         [Fact]
-        public async Task Update_WhenIntervalNotPassed_SkipsPatient()
+        public async Task Update_IntervalNotPassed_PatientSkipped()
         {
-            const double initialTemperature = 36.6;
-            var patient = new Patient
+            var now = DateTime.UtcNow;
+            var patients = new List<Patient>
+    {
+        new Patient
+        {
+            MetricLastGenerations = new Dictionary<string, DateTime>
             {
-                Temperature = new Metric
-                {
-                    Value = initialTemperature,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-50) // Меньше интервала (60s)
-                },
-                MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "Temperature", DateTime.UtcNow.AddSeconds(-50) }
-                }
-            };
+                { "Temperature", now.AddSeconds(-25) } // Интервал 30 сек, прошло 25
+            }
+        }
+    };
+            await _processor.Update(patients);
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(initialTemperature, patient.Temperature.Value);
             _generatorMock.Verify(
-                g => g.GenerateTemperature(It.IsAny<double>()),
+                x => x.GenerateTemperature(It.IsAny<double?>()),
+                Times.Never);
+
+            _kafkaServiceMock.Verify(
+                x => x.SendToAllTopics(It.IsAny<Patient>(), It.IsAny<string>(), It.IsAny<double>()),
+                Times.Never);
+
+            _loggerMock.Verify(
+                x => x.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Never);
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
+            // Arrange
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для Temperature";
 
-            _generatorMock
-                .Setup(g => g.GenerateTemperature(It.IsAny<double>()))
-                .Throws(expectedException);
+            // Act
+            await _processor.Update(nullPatients!);
 
-            await _processor.Update(patients);
-
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]

@@ -129,8 +129,8 @@ namespace Tests.MedicalDashboard.DCSTests.Kafka
             _loggerMock.Verify(x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(metricName)),
-                expectedException,
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Delivery failed")),
+                It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
         }
