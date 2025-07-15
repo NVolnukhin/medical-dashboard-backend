@@ -122,28 +122,29 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
                 Id = id,
                 Name = "Test Patient",
                 Height = 180, 
-                BaseWeight = 70, 
+                BaseWeight = 70,
+                BMI = new Metric { Value = 24.5 },
                 MetricLastGenerations = new Dictionary<string, DateTime>
         {
             { "BMI", now.AddSeconds(-31) } // Интервал 30 сек, прошло 31 (> интервала)
         }
             };
             var patients = new List<Patient> { patient };
-            const double generatedWeight = 72.5;
+            const double expectedBmi = 25.0;
             _generatorMock
-                .Setup(x => x.GenerateWeight(It.IsAny<double?>(), It.IsAny<double>()))
-                .Returns(generatedWeight);
-            double? expectedBmi = 10000 * generatedWeight / (patient.Height * patient.Height);
+                .Setup(x => x.GenerateBMI(24.5, patient.BaseWeight, patient.Height))
+                .Returns(expectedBmi);
 
             await _processor.Update(patients);
+            
             _generatorMock.Verify(
-                x => x.GenerateWeight(It.IsAny<double?>(), patient.BaseWeight),
+                x => x.GenerateBMI(24.5, patient.BaseWeight, patient.Height),
                 Times.Once);
             Assert.Equal(expectedBmi, patient.BMI.Value); 
             Assert.Equal(now, patient.MetricLastGenerations["BMI"], TimeSpan.FromMilliseconds(100)); // Допуск 100 мс
 
             _kafkaServiceMock.Verify(
-                x => x.SendToAllTopics(patient, "BMI", expectedBmi.Value),
+                x => x.SendToAllTopics(patient, "BMI", expectedBmi),
                 Times.Once);
         }
 

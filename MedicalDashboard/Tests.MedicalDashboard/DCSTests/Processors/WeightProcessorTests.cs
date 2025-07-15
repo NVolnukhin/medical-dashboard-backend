@@ -146,9 +146,7 @@ namespace Tests.MedicalDashboard.DCSTests.Services
             Assert.Equal(newWeight, patient.Weight.Value);
             Assert.True((DateTime.UtcNow - patient.Weight.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync(
-                    "md-metrics",
-                    It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, "Weight", newWeight),
                 Times.Once);
         }
 

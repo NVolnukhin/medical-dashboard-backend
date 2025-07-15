@@ -122,7 +122,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
                 },
                 MetricLastGenerations = new Dictionary<string, DateTime>
                 {
-                    { "RespirationRate", DateTime.UtcNow.AddSeconds(-45) }
+                    { "RespirationRate", DateTime.UtcNow.AddSeconds(-65) }
                 }
             };
 
@@ -139,7 +139,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             Assert.Equal(newRespiration, patient.RespirationRate.Value);
             Assert.True((DateTime.UtcNow - patient.RespirationRate.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("md-metrics", It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, "RespirationRate", newRespiration),
                 Times.Once);
         }
 

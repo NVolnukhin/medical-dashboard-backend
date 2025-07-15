@@ -139,7 +139,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             Assert.Equal(newPulse, patient.Pulse.Value);
             Assert.True((DateTime.UtcNow - patient.Pulse.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("md-metrics", It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, "Pulse", newPulse),
                 Times.Once);
         }
 

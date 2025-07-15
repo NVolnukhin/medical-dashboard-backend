@@ -128,10 +128,10 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             var patients = new List<Patient> { patient };
 
             double generatedValue = 136;
-            _generatorMock.Setup(g => g.GenerateHemoglobin(patient.Hemoglobin.Value)).Returns(generatedValue);
+            _generatorMock.Setup(g => g.GenerateHemoglobin(135)).Returns(generatedValue);
 
             await _processor.Update(patients);
-            _generatorMock.Verify(g => g.GenerateHemoglobin(patient.Hemoglobin.Value), Times.Once);
+            _generatorMock.Verify(g => g.GenerateHemoglobin(135), Times.Once);
 
             Assert.Equal(generatedValue, patient.Hemoglobin.Value);
             Assert.InRange(patient.Hemoglobin.LastUpdate, now.AddSeconds(-1), now.AddSeconds(1));

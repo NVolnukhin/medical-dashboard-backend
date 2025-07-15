@@ -136,7 +136,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             Assert.Equal(newPressure, patient.SystolicPressure.Value);
             Assert.True((DateTime.UtcNow - patient.SystolicPressure.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("md-metrics", It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, "SystolicPressure", newPressure),
                 Times.Once);
         }
 
