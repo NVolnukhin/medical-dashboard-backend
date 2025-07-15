@@ -136,7 +136,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             Assert.Equal(newPressure, patient.SystolicPressure.Value);
             Assert.True((DateTime.UtcNow - patient.SystolicPressure.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                k => k.ProduceAsync("md-metrics", It.IsAny<string>()),
                 Times.Once);
         }
 
@@ -166,25 +166,24 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
+            // Arrange
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для SystolicPressure";
 
-            _generatorMock
-                .Setup(g => g.GenerateSystolicPressure())
-                .Throws(expectedException);
+            // Act
+            await _processor.Update(nullPatients!);
 
-            await _processor.Update(patients);
-
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]

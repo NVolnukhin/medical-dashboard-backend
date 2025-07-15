@@ -108,38 +108,43 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        public async Task Update_WhenIntervalPassed_ProcessesPatient()
         {
-            const double initialHemoglobin = 140.0;
-            const double newHemoglobin = 143.0;
+            var now = DateTime.UtcNow;
+            var id = Guid.NewGuid();
+
+            string metricName = _processor.GetMetricType().ToString();
+
             var patient = new Patient
             {
-                Id = Guid.NewGuid(),
-                Hemoglobin = new Metric
-                {
-                    Value = initialHemoglobin,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-65)
-                },
+                Id = id,
+                Name = "Test Patient",
                 MetricLastGenerations = new Dictionary<string, DateTime>
                 {
-                    { "Hemoglobin", DateTime.UtcNow.AddSeconds(-65) }
-                }
+                    [metricName] = now.AddSeconds(-61)
+                },
+                Hemoglobin = new Metric { Value = 135 }
             };
+            var patients = new List<Patient> { patient };
 
-            _generatorMock
-                .Setup(g => g.GenerateHemoglobin(initialHemoglobin))
-                .Returns(newHemoglobin);
+            double generatedValue = 136;
+            _generatorMock.Setup(g => g.GenerateHemoglobin(patient.Hemoglobin.Value)).Returns(generatedValue);
 
-            _kafkaServiceMock
-                .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(Task.CompletedTask);
+            await _processor.Update(patients);
+            _generatorMock.Verify(g => g.GenerateHemoglobin(patient.Hemoglobin.Value), Times.Once);
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(newHemoglobin, patient.Hemoglobin.Value);
-            Assert.True((DateTime.UtcNow - patient.Hemoglobin.LastUpdate).TotalSeconds < 1);
+            Assert.Equal(generatedValue, patient.Hemoglobin.Value);
+            Assert.InRange(patient.Hemoglobin.LastUpdate, now.AddSeconds(-1), now.AddSeconds(1));
+            Assert.InRange(patient.MetricLastGenerations[metricName], now.AddSeconds(-1), now.AddSeconds(1));
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, metricName, generatedValue),
+                Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString().Contains($"Generated {metricName} for {patient.Name}")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
         }
 
@@ -169,25 +174,21 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для Hemoglobin";
 
-            _generatorMock
-                .Setup(g => g.GenerateHemoglobin(It.IsAny<double>()))
-                .Throws(expectedException);
+            await _processor.Update(nullPatients!);
 
-            await _processor.Update(patients);
-
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]

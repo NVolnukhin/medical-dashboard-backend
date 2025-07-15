@@ -63,7 +63,7 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         [Fact]
         public void GetIntervalSeconds_ReturnsCorrectValue()
         {
-            const int expectedInterval = 25;
+            const int expectedInterval = 30;
             var result = _processor.GetIntervalSeconds();
             Assert.Equal(expectedInterval, result);
         }
@@ -108,86 +108,88 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
         }
 
         [Fact]
-        public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        public async Task Update_IntervalPassed_PatientProcessed()
         {
-            const double initialSaturation = 95.0;
-            const double newSaturation = 96.5;
+            var now = DateTime.UtcNow;
+            const double initialSaturation = 97.5; 
+            var id = Guid.NewGuid();
             var patient = new Patient
             {
-                Id = Guid.NewGuid(),
-                Saturation = new Metric
-                {
-                    Value = initialSaturation,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-30)
-                },
+                Id = id,
+                Name = "Test Patient",
+                Saturation = new Metric { Value = initialSaturation },
                 MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "Saturation", DateTime.UtcNow.AddSeconds(-30) }
-                }
+        {
+            { "Saturation", now.AddSeconds(-31) }
+        }
             };
 
+            var patients = new List<Patient> { patient };
+            const double generatedSaturation = 98.2;
+
             _generatorMock
-                .Setup(g => g.GenerateSaturation(initialSaturation))
-                .Returns(newSaturation);
+                .Setup(x => x.GenerateSaturation(It.IsAny<double?>()))
+                .Returns(generatedSaturation);
 
-            _kafkaServiceMock
-                .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(Task.CompletedTask);
+            await _processor.Update(patients);
+            _generatorMock.Verify(
+                x => x.GenerateSaturation(initialSaturation),
+                Times.Once);
+            Assert.Equal(generatedSaturation, patient.Saturation.Value);
+            Assert.Equal(now, patient.MetricLastGenerations["Saturation"], TimeSpan.FromMilliseconds(100));
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(newSaturation, patient.Saturation.Value);
-            Assert.True((DateTime.UtcNow - patient.Saturation.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                x => x.SendToAllTopics(patient, "Saturation", generatedSaturation),
                 Times.Once);
         }
 
         [Fact]
-        public async Task Update_WhenIntervalNotPassed_SkipsPatient()
+        public async Task Update_IntervalNotPassed_PatientSkipped()
         {
-            const double initialSaturation = 95.0;
-            var patient = new Patient
+            var now = DateTime.UtcNow;
+            var patients = new List<Patient>
+    {
+        new Patient
+        {
+            MetricLastGenerations = new Dictionary<string, DateTime>
             {
-                Saturation = new Metric
-                {
-                    Value = initialSaturation,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-10)
-                },
-                MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "Saturation", DateTime.UtcNow.AddSeconds(-10) }
-                }
-            };
-
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(initialSaturation, patient.Saturation.Value);
+                { "Saturation", now.AddSeconds(-25) } // Интервал 30 сек, прошло 25
+            }
+        }
+    };
+            await _processor.Update(patients);
             _generatorMock.Verify(
-                g => g.GenerateSaturation(It.IsAny<double>()),
+                x => x.GenerateSaturation(It.IsAny<double?>()),
+                Times.Never);
+
+            _kafkaServiceMock.Verify(
+                x => x.SendToAllTopics(It.IsAny<Patient>(), It.IsAny<string>(), It.IsAny<double>()),
+                Times.Never);
+
+            _loggerMock.Verify(
+                x => x.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Never);
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
+            // Arrange
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для Saturation";
 
-            _generatorMock
-                .Setup(g => g.GenerateSaturation(It.IsAny<double>()))
-                .Throws(expectedException);
+            // Act
+            await _processor.Update(nullPatients!);
 
-            await _processor.Update(patients);
-
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]

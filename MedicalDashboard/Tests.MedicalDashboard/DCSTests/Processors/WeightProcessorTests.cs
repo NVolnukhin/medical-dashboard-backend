@@ -147,7 +147,7 @@ namespace Tests.MedicalDashboard.DCSTests.Services
             Assert.True((DateTime.UtcNow - patient.Weight.LastUpdate).TotalSeconds < 1);
             _kafkaServiceMock.Verify(
                 k => k.ProduceAsync(
-                    "patient_metrics",
+                    "md-metrics",
                     It.IsAny<string>()),
                 Times.Once);
         }
@@ -181,24 +181,26 @@ namespace Tests.MedicalDashboard.DCSTests.Services
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() }; // Невалидный пациент
-            var expectedException = new InvalidOperationException("Test error");
+            // Arrange
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для Weight";
 
-            _generatorMock
-                .Setup(g => g.GenerateWeight(It.IsAny<double>(), It.IsAny<double>()))
-                .Throws(expectedException);
-            await _processor.Update(patients);
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            // Act
+            await _processor.Update(nullPatients!);
+
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
+
 
         [Fact]
         public void GetMetricValue_ReturnsCorrectValue()

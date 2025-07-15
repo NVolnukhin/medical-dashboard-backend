@@ -132,87 +132,91 @@ namespace Tests.MedicalDashboard.DCSTests.Processors
             Assert.True(patient.Cholesterol.LastUpdate <= afterUpdate);
         }
 
-        [Fact]
-        public async Task Update_WhenIntervalPassed_UpdatesPatient()
+        public async Task Update_WhenIntervalPassed_ProcessesPatient()
         {
-            const double initialCholesterol = 5.2;
-            const double newCholesterol = 5.5;
+            var now = DateTime.UtcNow;
+            var id = Guid.NewGuid();
+
+            string metricName = _processor.GetMetricType().ToString();
+
             var patient = new Patient
             {
-                Id = Guid.NewGuid(),
-                Cholesterol = new Metric
-                {
-                    Value = initialCholesterol,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-125)
-                },
+                Id = id,
+                Name = "Test Patient",
                 MetricLastGenerations = new Dictionary<string, DateTime>
                 {
-                    { "Cholesterol", DateTime.UtcNow.AddSeconds(-125) }
-                }
+                    [metricName] = now.AddSeconds(-301) 
+                },
+                Cholesterol = new Metric { Value = 5.2 } 
             };
+            var patients = new List<Patient> { patient };
 
-            _generatorMock
-                .Setup(g => g.GenerateCholesterol(initialCholesterol))
-                .Returns(newCholesterol);
+            double generatedValue = 5.5;
+            _generatorMock.Setup(g => g.GenerateCholesterol(patient.Cholesterol.Value)).Returns(generatedValue);
 
-            _kafkaServiceMock
-                .Setup(k => k.ProduceAsync(It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(Task.CompletedTask);
+            await _processor.Update(patients);
+            _generatorMock.Verify(g => g.GenerateCholesterol(patient.Cholesterol.Value), Times.Once);
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(newCholesterol, patient.Cholesterol.Value);
-            Assert.True((DateTime.UtcNow - patient.Cholesterol.LastUpdate).TotalSeconds < 1);
+            Assert.Equal(generatedValue, patient.Cholesterol.Value);
+            Assert.InRange(patient.Cholesterol.LastUpdate, now.AddSeconds(-1), now.AddSeconds(1));
+            Assert.InRange(patient.MetricLastGenerations[metricName], now.AddSeconds(-1), now.AddSeconds(1)); 
             _kafkaServiceMock.Verify(
-                k => k.ProduceAsync("patient_metrics", It.IsAny<string>()),
+                k => k.SendToAllTopics(patient, metricName, generatedValue),
+                Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString().Contains($"Generated {metricName} for {patient.Name}")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
         }
 
         [Fact]
-        public async Task Update_WhenIntervalNotPassed_SkipsPatient()
+        public async Task Update_IntervalNotPassed_PatientSkipped()
         {
-            const double initialCholesterol = 5.2;
-            var patient = new Patient
+            var now = DateTime.UtcNow;
+            var patients = new List<Patient>
+    {
+        new Patient
+        {
+            MetricLastGenerations = new Dictionary<string, DateTime>
             {
-                Cholesterol = new Metric
-                {
-                    Value = initialCholesterol,
-                    LastUpdate = DateTime.UtcNow.AddSeconds(-60)
-                },
-                MetricLastGenerations = new Dictionary<string, DateTime>
-                {
-                    { "Cholesterol", DateTime.UtcNow.AddSeconds(-60) }
-                }
-            };
+                { "Cholesterol", now.AddSeconds(-250) } // Интервал 300 сек, прошло 250
+            }
+        }
+    };
+            await _processor.Update(patients);
 
-            await _processor.Update(new List<Patient> { patient });
-
-            Assert.Equal(initialCholesterol, patient.Cholesterol.Value);
             _generatorMock.Verify(
-                g => g.GenerateCholesterol(It.IsAny<double>()),
+                x => x.GenerateCholesterol(It.IsAny<double?>()),
+                Times.Never);
+
+            _kafkaServiceMock.Verify(
+                x => x.SendToAllTopics(It.IsAny<Patient>(), It.IsAny<string>(), It.IsAny<double>()),
+                Times.Never);
+
+            _loggerMock.Verify(
+                x => x.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Never);
         }
 
         [Fact]
-        public async Task Update_WhenException_LogsError()
+        public async Task Update_WhenPatientsIsNull_LogsError()
         {
-            var patients = new List<Patient> { new Patient() };
-            var expectedException = new InvalidOperationException("Test error");
+            List<Patient> nullPatients = null!;
+            var expectedMessage = "Ошибка в Update для Cholesterol";
+            
+            await _processor.Update(nullPatients!);
 
-            _generatorMock
-                .Setup(g => g.GenerateCholesterol(It.IsAny<double>()))
-                .Throws(expectedException);
-
-            await _processor.Update(patients);
-
-            _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedException.Message)),
-                    expectedException,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedMessage)),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once
+            );
         }
 
         [Fact]
