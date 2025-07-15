@@ -1880,6 +1880,7 @@ components:
         - firstName
         - lastName
         - phoneNumber
+        - role
       properties:
         email:
           type: string
@@ -1904,7 +1905,11 @@ components:
         phoneNumber:
           type: string
           description: Номер телефона
-          example: "+7 (999) 123-45-67"
+          example: "+77777777777"
+        role:
+          type: string
+          description: Роль пользователя (doctor / nurse / admin)
+          example: doctor
 
     UpdatePasswordRequest:
       type: object
