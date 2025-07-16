@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Shared;
 using System;
 using System.Data;
+using System.Linq;
 
 namespace DataCollectorService.Worker
 {
@@ -17,9 +18,17 @@ namespace DataCollectorService.Worker
         private readonly List<IObserver> _observers = new();
         private readonly ILogger<WorkerService> _logger;
         private readonly DataCollectorDbContext _dbContext;
-        private readonly List<Patient> _patients = new();
+        //private readonly List<Patient> _patients = new();
         private readonly MetricGenerationConfig _config;
         private readonly List<IMetricProcessor> _metricProcessors = new();
+
+
+
+        private readonly Dictionary<Guid, PatientState> _patientStates = new();
+        private List<string> _metricNames;
+
+
+
         //public const int BaseInterval = 30;
 
         public WorkerService(
@@ -41,7 +50,20 @@ namespace DataCollectorService.Worker
                 Attach(observer);
             }
 
-            _patients = InitPatients();
+            _metricNames = new List<string>
+            {
+                "Pulse",
+                "Saturation",
+                "Respiration",
+                "Weight",
+                "BMI",
+                "Cholesterol",
+                "Hemoglobin",
+                "SystolicPressure",
+                "DiastolicPressure",
+                "Temperature"
+            };
+            //_patients = InitPatients();
         }
 
         public List<Patient> InitPatients()
@@ -117,9 +139,56 @@ namespace DataCollectorService.Worker
             {
                 try
                 {
-                    var patientsSnapshot = _patients.ToList();
-                    //_logger.LogInformation($"ПАЦИЕНТЫ      {patientsSnapshot.Count}");
-                    await Notify(patientsSnapshot); // Уведомляем наблюдателей о всех пациентах
+                    var dtos = await _dbContext.Patients.AsNoTracking().ToListAsync(ct);
+                    var allMetrics = await _dbContext.Metrics.AsNoTracking().ToListAsync(ct);
+
+                    var currentPatientIds = dtos.Select(d => d.PatientId).ToList();
+                    var removedIds = _patientStates.Keys.Except(currentPatientIds).ToList();
+                    foreach (var id in removedIds)
+                    {
+                        _patientStates.Remove(id);
+                        _logger.LogInformation($"Удалено состояние пациента {id}");
+                    }
+
+                    
+
+                    var currentPatients = new List<Patient>();
+
+                    foreach (var dto in dtos)
+                    {
+                        if (!_patientStates.TryGetValue(dto.PatientId, out var state))
+                        {
+                            state = new PatientState();
+                            foreach (var metricName in _metricNames)
+                            {
+                                state.MetricLastGenerations[metricName] = DateTime.MinValue;
+                            }
+                            _patientStates[dto.PatientId] = state;
+                            _logger.LogInformation($"Добавлен новый пациент: {dto.PatientId}");
+                        }
+
+                        var patientMetrics = allMetrics
+                            .Where(m => m.PatientId == dto.PatientId)
+                            .ToList();
+
+                        var weightMetric = patientMetrics.FirstOrDefault(m => m.Type == "Weight");
+
+                        var patient = new Patient
+                        {
+                            Id = dto.PatientId,
+                            Age = CalculateAge(dto.BirthDate),
+                            Height = dto.Height,
+                            Name = $"{dto.FirstName} {dto.MiddleName} {dto.LastName}".Trim(),
+                            Sex = dto.Sex.ToString(),
+                            Ward = dto.Ward,
+                            BaseWeight = weightMetric?.Value ?? 70.0, 
+                            MetricLastGenerations = state.MetricLastGenerations
+                        };
+
+                        currentPatients.Add(patient);
+                    }
+
+                    await Notify(currentPatients); // Уведомляем наблюдателей о всех пациентах
                 }
                 catch (Exception ex)
                 {
@@ -133,9 +202,11 @@ namespace DataCollectorService.Worker
         public async Task Notify(List<Patient> patients)
         {
             var tasks = new List<Task>();
+            
             foreach (var observer in _observers)
             {
                 tasks.Add(observer.Update(patients));
+                //_logger.LogInformation("ГЕНЕРАЦИЯ ИДЕТ АААААААААААААААААААААА");
             }
             await Task.WhenAll(tasks);
         }

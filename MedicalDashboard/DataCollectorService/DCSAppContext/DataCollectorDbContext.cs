@@ -25,6 +25,7 @@ namespace DataCollectorService.DCSAppContext
                 entity.HasKey(e => e.PatientId);
                 entity.ToTable("Metrics");
             });
+
         }
     }
 }

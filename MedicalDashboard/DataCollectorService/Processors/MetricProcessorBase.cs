@@ -29,11 +29,12 @@ public abstract class MetricProcessorBase : IMetricProcessor
 
             foreach (var patient in patients)
             {
+                //_logger.LogInformation("ГЕНЕРАЦИЯ АААААААААААААААААААА");
                 if (patient.MetricLastGenerations.TryGetValue(metricName, out DateTime lastGeneration))
                 {
-
                     if ((now - lastGeneration).TotalSeconds >= intervalSeconds)
                     {
+                        
                         tasks.Add(ProcessPatientMetric(patient, metricName, now));
 
                     }
