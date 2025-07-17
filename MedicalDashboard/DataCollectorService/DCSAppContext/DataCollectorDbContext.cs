@@ -22,7 +22,7 @@ namespace DataCollectorService.DCSAppContext
 
             modelBuilder.Entity<MetricDto>(entity =>
             {
-                entity.HasKey(e => e.PatientId);
+                entity.HasKey(e => new { e.PatientId, e.Type, e.Timestamp });
                 entity.ToTable("Metrics");
             });
 
