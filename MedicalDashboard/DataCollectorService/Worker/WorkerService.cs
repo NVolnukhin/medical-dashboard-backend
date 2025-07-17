@@ -149,9 +149,7 @@ namespace DataCollectorService.Worker
                         _patientStates.Remove(id);
                         _logger.LogInformation($"Удалено состояние пациента {id}");
                     }
-
                     
-
                     var currentPatients = new List<Patient>();
 
                     foreach (var dto in dtos)
@@ -159,9 +157,11 @@ namespace DataCollectorService.Worker
                         if (!_patientStates.TryGetValue(dto.PatientId, out var state))
                         {
                             state = new PatientState();
+                            var now = DateTime.UtcNow;
                             foreach (var metricName in _metricNames)
                             {
-                                state.MetricLastGenerations[metricName] = DateTime.MinValue;
+                                // инициализируем текущим временем чтоб генерация началась с правильными интервалами
+                                state.MetricLastGenerations[metricName] = now;
                             }
                             _patientStates[dto.PatientId] = state;
                             _logger.LogInformation($"Добавлен новый пациент: {dto.PatientId}");
@@ -185,6 +185,9 @@ namespace DataCollectorService.Worker
                             MetricLastGenerations = state.MetricLastGenerations
                         };
 
+                        // инициализируем метрики базовыми значениями из БД
+                        InitializePatientMetrics(patient, patientMetrics);
+
                         currentPatients.Add(patient);
                     }
 
@@ -199,6 +202,72 @@ namespace DataCollectorService.Worker
             }
         }
 
+        private void InitializePatientMetrics(Patient patient, List<MetricDto> patientMetrics)
+        {
+            // инициализируем метрики базовыми значениями из бдшки или значениями по умолчанию
+            foreach (var metric in patientMetrics)
+            {
+                switch (metric.Type)
+                {
+                    case "Pulse":
+                        patient.Pulse.Value = metric.Value;
+                        patient.Pulse.LastUpdate = metric.Timestamp;
+                        break;
+                    case "Saturation":
+                        patient.Saturation.Value = metric.Value;
+                        patient.Saturation.LastUpdate = metric.Timestamp;
+                        break;
+                    case "Temperature":
+                        patient.Temperature.Value = metric.Value;
+                        patient.Temperature.LastUpdate = metric.Timestamp;
+                        break;
+                    case "RespirationRate":
+                        patient.RespirationRate.Value = metric.Value;
+                        patient.RespirationRate.LastUpdate = metric.Timestamp;
+                        break;
+                    case "SystolicPressure":
+                        patient.SystolicPressure.Value = metric.Value;
+                        patient.SystolicPressure.LastUpdate = metric.Timestamp;
+                        break;
+                    case "DiastolicPressure":
+                        patient.DiastolicPressure.Value = metric.Value;
+                        patient.DiastolicPressure.LastUpdate = metric.Timestamp;
+                        break;
+                    case "Hemoglobin":
+                        patient.Hemoglobin.Value = metric.Value;
+                        patient.Hemoglobin.LastUpdate = metric.Timestamp;
+                        break;
+                    case "Weight":
+                        patient.Weight.Value = metric.Value;
+                        patient.Weight.LastUpdate = metric.Timestamp;
+                        break;
+                    case "BMI":
+                        patient.BMI.Value = metric.Value;
+                        patient.BMI.LastUpdate = metric.Timestamp;
+                        break;
+                    case "Cholesterol":
+                        patient.Cholesterol.Value = metric.Value;
+                        patient.Cholesterol.LastUpdate = metric.Timestamp;
+                        break;
+                }
+            }
+
+            // значения по умолчанию для метрик, которых нет в БД
+            if (patient.Pulse.Value == 0) patient.Pulse.Value = 70;
+            if (patient.Saturation.Value == 0) patient.Saturation.Value = 98;
+            if (patient.Temperature.Value == 0) patient.Temperature.Value = 36.6;
+            if (patient.RespirationRate.Value == 0) patient.RespirationRate.Value = 16;
+            if (patient.SystolicPressure.Value == 0) patient.SystolicPressure.Value = 120;
+            if (patient.DiastolicPressure.Value == 0) patient.DiastolicPressure.Value = 80;
+            if (patient.Hemoglobin.Value == 0) patient.Hemoglobin.Value = 140;
+            if (patient.Weight.Value == 0) patient.Weight.Value = patient.BaseWeight;
+            if (patient.BMI.Value == 0 && patient.Height.HasValue) 
+            {
+                patient.BMI.Value = patient.Weight.Value / Math.Pow(patient.Height.Value / 100, 2);
+            }
+            if (patient.Cholesterol.Value == 0) patient.Cholesterol.Value = 5.0;
+        }
+
         public async Task Notify(List<Patient> patients)
         {
             var tasks = new List<Task>();
@@ -206,7 +275,7 @@ namespace DataCollectorService.Worker
             foreach (var observer in _observers)
             {
                 tasks.Add(observer.Update(patients));
-                //_logger.LogInformation("ГЕНЕРАЦИЯ ИДЕТ АААААААААААААААААААААА");
+                //_logger.LogInformation("ГЕНЕРАЦИЯ ИДЕТ АААААААААААААААААААААА"); АХАХХАХАА - зачет
             }
             await Task.WhenAll(tasks);
         }
