@@ -29,18 +29,23 @@ public abstract class MetricProcessorBase : IMetricProcessor
 
             foreach (var patient in patients)
             {
+                //_logger.LogInformation("ГЕНЕРАЦИЯ АААААААААААААААААААА");
                 if (patient.MetricLastGenerations.TryGetValue(metricName, out DateTime lastGeneration))
                 {
-
-                    if ((now - lastGeneration).TotalSeconds >= intervalSeconds)
+                    var secondsSinceLastGeneration = (now - lastGeneration).TotalSeconds;
+                    
+                    if (secondsSinceLastGeneration >= intervalSeconds)
                     {
                         tasks.Add(ProcessPatientMetric(patient, metricName, now));
-
                     }
                 }
             }
 
-            await Task.WhenAll(tasks);
+            if (tasks.Count > 0)
+            {
+                _logger.LogInfo($"Генерируем {metricName} для {tasks.Count} пациентов");
+                await Task.WhenAll(tasks);
+            }
         }
         catch (Exception ex)
         {
