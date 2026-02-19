@@ -1,0 +1,2542 @@
+openapi: 3.0.3
+info:
+  title: Medical Dashboard API
+  description: |    
+    ### Микросервисы:
+    - **AuthService** - Аутентификация и управление пользователями
+    - **DashboardAPI** - Управление пациентами, метриками и алертами
+    - **NotificationService** - Отправка уведомлений
+    
+    ### Аутентификация
+    Большинство эндпоинтов требуют JWT Bearer токен через `/identity/login`.
+    
+    ### SignalR
+    Для real-time получения метрик используется SignalR Hub `/hubs/metrics` через Gateway.
+    Gateway автоматически проксирует WebSocket соединения к DashboardAPI.
+    Поддерживаются методы:
+    - `SubscribeToPatient(patientId: Guid)` - подписка на метрики пациента
+    - `SubscribeToPatientMetrics(patientId: Guid)` - подписка на метрики пациента (альтернативное имя)
+    - `UnsubscribeFromPatient(patientId: Guid)` - отписка от метрик пациента
+    
+    ### Ограничения
+    - Все запросы должны содержать заголовок `Content-Type: application/json`
+    - JWT токены имеют ограниченное время жизни - 7 дней
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:7168
+    description: Development Gateway (проксирует запросы к микросервисам)
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ========================================
+  # AUTH SERVICE ENDPOINTS
+  # ========================================
+  
+  /identity/login:
+    post:
+      tags:
+        - Authentication
+      summary: Вход в систему
+      description: Аутентификация пользователя и получение JWT токена
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+  /identity/refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Обновление токенов
+      description: Обновляет Refresh токен и выдает новый JWT токен
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identity/revoke-token:
+    post:
+      tags:
+        - Authentication
+      summary: Отозвать токен
+      description: Отзывает refresh токен пользователя
+      operationId: revoke
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Успешно отозван
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identity/register:
+    post:
+      tags:
+        - Authentication
+      summary: Регистрация пользователя
+      description: Создание нового пользователя с автоматической генерацией пароля
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Пользователь успешно создан
+        '400':
+          description: Пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identity/validate:
+    get:
+      tags:
+        - Authentication
+      summary: Валидация токена
+      description: Проверка валидности JWT токена
+      operationId: validateToken
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          description: Email пользователя
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT токен для валидации
+      responses:
+        '200':
+          description: Токен валиден
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+        '400':
+          description: Неверный токен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /identity/get-roles:
+    get:
+      tags:
+        - Authentication
+      summary: Получение списка доступных ролей пользователей
+      description: >
+        Возвращает перечень всех ролей, которые могут быть назначены пользователю при регистрации.
+        Роли возвращаются в формате строкового массива.
+      operationId: getAvailableRoles
+      responses:
+        '200':
+          description: Успешный запрос. Возвращает массив доступных ролей.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  enum: [ Doctor, Admin, Nurse ]
+                  example: Doctor
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identity/users:
+    get:
+      tags:
+        - Authentication
+      summary: Получение списка всех пользователей
+      description: >
+        Возвращает список всех пользователей системы с пагинацией и фильтрацией.
+        Доступно только для администраторов.
+      operationId: getUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Номер страницы
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Размер страницы
+        - name: emailFilter
+          in: query
+          schema:
+            type: string
+          description: Фильтр по email (поиск по подстроке)
+        - name: roleFilter
+          in: query
+          schema:
+            type: string
+            enum: [admin, doctor, nurse]
+          description: Фильтр по роли
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserListResponse'
+                  totalCount:
+                    type: integer
+                    description: Общее количество пользователей
+                  page:
+                    type: integer
+                    description: Текущая страница
+                  pageSize:
+                    type: integer
+                    description: Размер страницы
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identity/update-password:
+    put:
+      tags:
+        - Authentication
+      summary: Обновление пароля
+      description: Изменение пароля авторизованного пользователя
+      operationId: updatePassword
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Пароль успешно обновлен
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /password-recovery/request:
+    post:
+      tags:
+        - Password Recovery
+      summary: Запрос восстановления пароля
+      description: Отправка запроса на восстановление пароля
+      operationId: requestPasswordRecovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryRequest'
+      responses:
+        '200':
+          description: Запрос отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordRecoveryResponse'
+        '400':
+          description: Ошибка при отправке запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /password-recovery/confirm:
+    post:
+      tags:
+        - Password Recovery
+      summary: Подтверждение восстановления пароля
+      description: Подтверждение восстановления пароля с использованием токена
+      operationId: confirmPasswordRecovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryConfirm'
+      responses:
+        '200':
+          description: Пароль успешно восстановлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordRecoveryResponse'
+        '400':
+          description: Ошибка при подтверждении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ========================================
+  # DASHBOARD API ENDPOINTS
+  # ========================================
+
+  /patients:
+    get:
+      tags:
+        - Patients
+      summary: Получить список пациентов
+      description: Получение списка пациентов с фильтрацией и пагинацией
+      operationId: getPatients
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Фильтр по имени (ФИО)
+        - name: ward
+          in: query
+          schema:
+            type: integer
+          description: Фильтр по номеру палаты
+        - name: doctorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по ID врача
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Номер страницы
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Размер страницы
+      responses:
+        '200':
+          description: Список пациентов
+          headers:
+            X-Total-Count:
+              description: Общее количество пациентов
+              schema:
+                type: integer
+            X-Page:
+              description: Текущая страница
+              schema:
+                type: integer
+            X-PageSize:
+              description: Размер страницы
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PatientDto'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Patients
+      summary: Создать пациента
+      description: Создание нового пациента
+      operationId: createPatient
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientDto'
+      responses:
+        '201':
+          description: Пациент создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patients/{id}:
+    get:
+      tags:
+        - Patients
+      summary: Получить пациента по ID
+      description: Получение информации о пациенте по его ID
+      operationId: getPatient
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '200':
+          description: Информация о пациенте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDto'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Patients
+      summary: Обновить пациента
+      description: Обновление информации о пациенте
+      operationId: updatePatient
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientDto'
+      responses:
+        '200':
+          description: Пациент обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Patients
+      summary: Удалить пациента
+      description: Удаление пациента по ID
+      operationId: deletePatient
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '204':
+          description: Пациент удален
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics/{patientId}:
+    get:
+      tags:
+        - Metrics
+      summary: Получить метрики пациента
+      description: Получение метрик пациента за указанный период
+      operationId: getPatientMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+        - name: startPeriod
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Начало периода
+        - name: endPeriod
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Конец периода
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Тип метрики (heart_rate, blood_pressure, temperature, etc.)
+      responses:
+        '200':
+          description: Список метрик
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetricDto'
+        '204':
+          description: Метрики не найдены
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics/latest/{patientId}:
+    get:
+      tags:
+        - Metrics
+      summary: Получить последние метрики пациента
+      description: Получение последних метрик пациента по каждому типу
+      operationId: getLatestPatientMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '200':
+          description: Последние метрики
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetricDto'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics:
+    post:
+      tags:
+        - Metrics
+      summary: Создать метрику
+      description: Создание новой метрики для пациента
+      operationId: createMetric
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMetricDto'
+      responses:
+        '201':
+          description: Метрика создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patient-alerts:
+    get:
+      tags:
+        - Alerts
+      summary: Получить список алертов
+      description: Получение списка алертов с фильтрацией и пагинацией
+      operationId: getAlerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patientId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по ID пациента
+        - name: isProcessed
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по статусу обработки
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Номер страницы
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Размер страницы
+      responses:
+        '200':
+          description: Список алертов
+          headers:
+            X-Total-Count:
+              description: Общее количество алертов
+              schema:
+                type: integer
+            X-Page:
+              description: Текущая страница
+              schema:
+                type: integer
+            X-PageSize:
+              description: Размер страницы
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertDto'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patient-alerts/{id}:
+    get:
+      tags:
+        - Alerts
+      summary: Получить алерт по ID
+      description: Получение информации об алерте по его ID
+      operationId: getAlert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID алерта
+      responses:
+        '200':
+          description: Информация об алерте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertDto'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Алерт не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Alerts
+      summary: Удалить алерт
+      description: Удаление алерта по ID
+      operationId: deleteAlert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID алерта
+      responses:
+        '204':
+          description: Алерт удален
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /patient-alerts/{id}/ack:
+    post:
+      tags:
+        - Alerts
+      summary: Подтвердить алерт
+      description: Подтверждение обработки алерта
+      operationId: acknowledgeAlert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID алерта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeAlertDto'
+      responses:
+        '200':
+          description: Алерт подтвержден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизованный доступ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Алерт не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ========================================
+  # SIGNALR HUB ENDPOINTS
+  # ========================================
+
+  /hubs/metrics:
+    get:
+      tags:
+        - SignalR
+      summary: SignalR Hub для метрик
+      description: |
+        WebSocket endpoint для real-time подключения к метрикам пациентов.
+        
+        ## Подключение
+        ```javascript
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/metrics")
+            .build();
+        
+        await connection.start();
+        ```
+        
+        ## Методы
+        - `SubscribeToPatient(patientId: Guid)` - Подписка на метрики пациента
+        - `UnsubscribeFromPatient(patientId: Guid)` - Отписка от метрик пациента
+        
+        ## События
+        - `ReceiveMetric(metric: MetricDto)` - Получение новой метрики
+        - `SubscribedToPatient(patientId: Guid)` - Подтверждение подписки
+        - `UnsubscribedFromPatient(patientId: Guid)` - Подтверждение отписки
+      operationId: signalRMetricsHub
+      responses:
+        '101':
+          description: Switching Protocols - WebSocket upgrade
+        '200':
+          description: HTTP fallback response
+    post:
+      tags:
+        - SignalR
+      summary: SignalR Hub для метрик (POST)
+      description: POST endpoint для SignalR negotiation
+      operationId: signalRMetricsHubPost
+      responses:
+        '200':
+          description: SignalR negotiation response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connectionId:
+                    type: string
+                    description: ID соединения
+                  availableTransports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        transport:
+                          type: string
+                          enum: [WebSockets, ServerSentEvents, LongPolling]
+                        transferFormats:
+                          type: array
+                          items:
+                            type: string
+                            enum: [Text, Binary]
+
+  /hubs/metrics/{catchAll}:
+    get:
+      tags:
+        - SignalR
+      summary: SignalR Hub для метрик (catch-all)
+      description: Catch-all endpoint для SignalR WebSocket соединений
+      operationId: signalRMetricsHubCatchAll
+      parameters:
+        - name: catchAll
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SignalR path parameters
+      responses:
+        '101':
+          description: Switching Protocols - WebSocket upgrade
+        '200':
+          description: HTTP fallback response
+    post:
+      tags:
+        - SignalR
+      summary: SignalR Hub для метрик (catch-all POST)
+      description: Catch-all POST endpoint для SignalR
+      operationId: signalRMetricsHubCatchAllPost
+      parameters:
+        - name: catchAll
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SignalR path parameters
+      responses:
+        '200':
+          description: SignalR response
+  /alerts:
+    get:
+      tags:
+        - SignalR
+      summary: SignalR Hub для алертов
+      description: |
+        WebSocket endpoint для real-time подключения к алертам пациентов.
+
+        ## Подключение
+        ```javascript
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/alerts")
+            .build();
+
+        await connection.start();
+        ```
+
+      operationId: signalRAlert
+      responses:
+        '101':
+          description: Switching Protocols - WebSocket upgrade
+        '200':
+          description: HTTP fallback response
+
+  # ========================================
+  # NOTIFICATION SERVICE ENDPOINTS
+  # ========================================
+
+  /notifications/notify:
+    post:
+      tags:
+        - Notifications
+      summary: Отправить уведомление
+      description: Отправка уведомления получателю
+      operationId: sendNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '200':
+          description: Уведомление отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+
+  /notifications/types:
+    get:
+      tags:
+        - Notifications
+      summary: Получить типы уведомлений
+      description: Получение списка всех доступных типов уведомлений
+      operationId: getNotificationTypes
+      responses:
+        '200':
+          description: Список типов уведомлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: Название типа
+                    value:
+                      type: integer
+                      description: Числовое значение типа
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+
+  /notifications/priorities:
+    get:
+      tags:
+        - Notifications
+      summary: Получить приоритеты уведомлений
+      description: Получение списка всех доступных приоритетов уведомлений
+      operationId: getNotificationPriorities
+      responses:
+        '200':
+          description: Список приоритетов уведомлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: Название приоритета
+                    value:
+                      type: integer
+                      description: Числовое значение приоритета
+        '401':
+          description: Попытка неавторизованного доступа
+          content:
+            application/json:
+              schema:
+                $ref:
+                  '#/components/schemas/ErrorResponse'
+        '403':
+          description: Попытка доступа с недостаточными правами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+
+  # ========================================
+  # DEAD LETTER ENDPOINTS
+  # ========================================
+
+  /dead-letters:
+    get:
+      tags:
+        - DeadLetter
+      summary: Получить все сообщения Dead Letter
+      description: Получение списка всех сообщений в очереди Dead Letter
+      operationId: getAllDeadLetters
+      responses:
+        '200':
+          description: Список сообщений Dead Letter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeadLetterMessage'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+
+  /dead-letters/unprocessed:
+    get:
+      tags:
+        - DeadLetter
+      summary: Получить необработанные сообщения Dead Letter
+      description: Получение списка необработанных сообщений в очереди Dead Letter
+      operationId: getUnprocessedDeadLetters
+      responses:
+        '200':
+          description: Список необработанных сообщений Dead Letter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeadLetterMessage'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+
+  /dead-letters/{id}/process:
+    post:
+      tags:
+        - DeadLetter
+      summary: Отметить сообщение Dead Letter как обработанное
+      description: Отметить сообщение в очереди Dead Letter как обработанное
+      operationId: processDeadLetter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор сообщения Dead Letter
+      responses:
+        '200':
+          description: Сообщение успешно обработано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeadLetterMessage'
+        '404':
+          description: Сообщение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResult'
+
+  # ========================================
+  # DEVICES ENDPOINTS
+  # ========================================
+  /devices:
+    get:
+      tags: [Devices]
+      summary: Получить список устройств
+      description: Получение списка устройств с фильтрацией по палате и статусу inUsing
+      security: [BearerAuth: []]
+      parameters:
+        - name: ward
+          in: query
+          schema:
+            type: integer
+          description: Фильтр по номеру палаты
+        - name: inUsing
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по статусу занятости
+      responses:
+        '200':
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceDto'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Devices]
+      summary: Создать устройство
+      description: Создание нового устройства
+      security: [BearerAuth: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiDeviceDto'
+      responses:
+        '201':
+          description: Устройство создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/{id}:
+    get:
+      tags: [Devices]
+      summary: Получить устройство по ID
+      description: Получение информации об устройстве по его ID
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      responses:
+        '200':
+          description: Информация об устройстве
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Devices]
+      summary: Обновить устройство
+      description: Обновление информации об устройстве
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiDeviceDto'
+      responses:
+        '200':
+          description: Устройство обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceDto'
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Devices]
+      summary: Удалить устройство
+      description: Удаление устройства по ID
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      responses:
+        '204':
+          description: Устройство удалено
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/on-patient/{id}:
+    get:
+      tags: [Devices]
+      summary: Получить устройства, подключённые к пациенту
+      description: Получение краткой информации об устройствах, подключённых к пациенту
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '200':
+          description: Список устройств и уникальные метрики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceShortDto'
+                  metrics:
+                    type: array
+                    items:
+                      type: string
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/counting-metrics/{patientId}:
+    get:
+      tags: [Devices]
+      summary: Получить уникальные метрики по устройствам пациента
+      description: Получение уникального массива метрик по всем устройствам, подключённым к пациенту
+      security: [BearerAuth: []]
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID пациента
+      responses:
+        '200':
+          description: Уникальные метрики
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metrics:
+                    type: array
+                    items:
+                      type: string
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/attach:
+    post:
+      tags: [Devices]
+      summary: Привязать устройство к пациенту
+      description: Привязка устройства к пациенту (оба id в теле)
+      security: [BearerAuth: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachDeviceDto'
+      responses:
+        '200':
+          description: Устройство привязано
+        '400':
+          description: Неверные данные или палаты не совпадают
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство или пациент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices/{id}/detach:
+    post:
+      tags: [Devices]
+      summary: Отвязать устройство от пациента
+      description: Отвязка устройства от пациента
+      security: [BearerAuth: []]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID устройства
+      responses:
+        '200':
+          description: Устройство отвязано
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer токен для аутентификации
+
+  schemas:
+    # ========================================
+    # AUTH SERVICE SCHEMAS
+    # ========================================
+    
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+          example: "test@example.com"
+        password:
+          type: string
+          description: Пароль пользователя
+          example: "strong_password"
+          minLength: 8
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен доступа
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Refresh токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
+        status:
+          type: string
+          description: Статус входа
+          example: "Success"
+        role:
+          type: string
+          description: Роль юзера
+          example: "doctor/admin/nurse"
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          format: guid
+          description: Старый токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
+          
+    RefreshTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен доступа
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Refresh токен
+          example: "9fce0eb7-54f2-481d-b861-9e805d3bc7e9"
+    
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - firstName
+        - lastName
+        - phoneNumber
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+          example: "user@example.com"
+        firstName:
+          type: string
+          description: Имя
+          example: "Иван"
+          maxLength: 100
+        middleName:
+          type: string
+          description: Отчество
+          example: "Иванович"
+          maxLength: 100
+        lastName:
+          type: string
+          description: Фамилия
+          example: "Иванов"
+          maxLength: 100
+        phoneNumber:
+          type: string
+          description: Номер телефона
+          example: "+77777777777"
+        role:
+          type: string
+          description: Роль пользователя (doctor / nurse / admin)
+          example: doctor
+
+    UpdatePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+        - confirmPassword
+      properties:
+        currentPassword:
+          type: string
+          description: Текущий пароль
+          example: "oldpassword123"
+          minLength: 8
+        newPassword:
+          type: string
+          description: Новый пароль
+          example: "newpassword123"
+          minLength: 8
+        confirmPassword:
+          type: string
+          description: Новый пароль
+          example: "newpassword123"
+          minLength: 8
+
+    PasswordRecoveryRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email для восстановления пароля
+          example: "user@example.com"
+
+    PasswordRecoveryConfirm:
+      type: object
+      required:
+        - token
+        - newPassword
+        - confirmPassword
+      properties:
+        token:
+          type: string
+          description: Токен восстановления
+          example: "recovery-token-123"
+        newPassword:
+          type: string
+          description: Новый пароль
+          example: "newpassword123"
+          minLength: 6
+        confirmPassword:
+          type: string
+          description: Подтверждение пароля
+          example: "newpassword123"
+          minLength: 6
+
+    PasswordRecoveryResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Сообщение о результате операции
+          example: "Password recovery email sent"
+
+    UserListResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор пользователя
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        firstName:
+          type: string
+          nullable: true
+          description: Имя пользователя
+          example: "Иван"
+        lastName:
+          type: string
+          nullable: true
+          description: Фамилия пользователя
+          example: "Иванов"
+        middleName:
+          type: string
+          nullable: true
+          description: Отчество пользователя
+          example: "Иванович"
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+          example: "user@example.com"
+        phoneNumber:
+          type: string
+          description: Номер телефона
+          example: "+7 (999) 123-45-67"
+        isActive:
+          type: boolean
+          description: Статус активности пользователя
+          example: true
+        role:
+          type: string
+          enum: [admin, doctor, nurse]
+          description: Роль пользователя
+          example: "doctor"
+
+    # ========================================
+    # DASHBOARD API SCHEMAS
+    # ========================================
+
+    PatientDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор пациента
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        firstName:
+          type: string
+          description: Имя пациента
+          example: "Иван"
+        middleName:
+          type: string
+          nullable: true
+          description: Отчество пациента
+          example: "Иванович"
+        lastName:
+          type: string
+          description: Фамилия пациента
+          example: "Иванов"
+        doctorId:
+          type: string
+          format: uuid
+          description: ID врача
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        birthDate:
+          type: string
+          format: date
+          description: Дата рождения
+          example: "1990-01-01"
+        sex:
+          type: string
+          enum: [M, F, U]
+          description: Пол (M - мужской, F - женский, U - неизвестно)
+          example: "M"
+        height:
+          type: number
+          nullable: true
+          description: Рост в сантиметрах
+          example: 175.5
+        ward:
+          type: integer
+          nullable: true
+          description: Номер палаты
+          example: 101
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания записи
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата последнего обновления
+          example: "2024-01-15T10:30:00Z"
+
+    CreatePatientDto:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - doctorId
+        - birthDate
+        - sex
+      properties:
+        firstName:
+          type: string
+          description: Имя пациента
+          example: "Иван"
+          maxLength: 100
+        middleName:
+          type: string
+          nullable: true
+          description: Отчество пациента
+          example: "Иванович"
+          maxLength: 100
+        lastName:
+          type: string
+          description: Фамилия пациента
+          example: "Иванов"
+          maxLength: 100
+        doctorId:
+          type: string
+          format: uuid
+          description: ID врача
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        birthDate:
+          type: string
+          format: date
+          description: Дата рождения
+          example: "1990-01-01"
+        sex:
+          type: string
+          enum: [M, F]
+          description: Пол (M - мужской, F - женский)
+          example: "M"
+        height:
+          type: number
+          nullable: true
+          description: Рост в сантиметрах
+          example: 175.5
+          minimum: 0
+          maximum: 300
+        ward:
+          type: integer
+          nullable: true
+          description: Номер палаты
+          example: 101
+
+    UpdatePatientDto:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - middleName
+        - doctorId
+        - birthDate
+        - sex
+        - ward
+      properties:
+        firstName:
+          type: string
+          description: Имя пациента
+          example: "Иван"
+          maxLength: 100
+        middleName:
+          type: string
+          nullable: true
+          description: Отчество пациента
+          example: "Иванович"
+          maxLength: 100
+        lastName:
+          type: string
+          description: Фамилия пациента
+          example: "Иванов"
+          maxLength: 100
+        doctorId:
+          type: string
+          format: uuid
+          description: ID врача
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        birthDate:
+          type: string
+          format: date
+          description: Дата рождения
+          example: "1990-01-01"
+        sex:
+          type: string
+          enum: [M, F, U]
+          description: Пол (M - мужской, F - женский, U - неизвестно)
+          example: "M"
+        height:
+          type: number
+          nullable: true
+          description: Рост в сантиметрах
+          example: 175.5
+          minimum: 0
+          maximum: 300
+        ward:
+          type: integer
+          nullable: true
+          description: Номер палаты
+          example: 101
+          minimum: 1
+          maximum: 9999
+
+    MetricDto:
+      type: object
+      properties:
+        patientId:
+          type: string
+          format: uuid
+          description: ID пациента
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          description: Тип метрики
+          example: "heart_rate"
+        value:
+          type: number
+          description: Значение метрики
+          example: 75.0
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+          example: "2024-01-15T10:30:00Z"
+
+    CreateMetricDto:
+      type: object
+      required:
+        - patientId
+        - type
+        - value
+        - timestamp
+      properties:
+        patientId:
+          type: string
+          format: uuid
+          description: ID пациента
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          description: Тип метрики
+          example: "heart_rate"
+          maxLength: 50
+        value:
+          type: number
+          description: Значение метрики
+          example: 75.0
+          minimum: -1000
+          maximum: 10000
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка
+          example: "2024-01-15T10:30:00Z"
+
+    AlertDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор алерта
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        patientId:
+          type: string
+          format: uuid
+          description: ID пациента
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        alertType:
+          type: string
+          description: Тип алерта
+          example: "critical"
+        indicator:
+          type: string
+          description: Индикатор алерта
+          example: "heart_rate"
+        severity:
+          type: string
+          enum: [high, medium, low]
+          description: Уровень серьезности
+          example: "high"
+        isProcessed:
+          type: boolean
+          description: Статус обработки
+          example: false
+        acknowledgedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время подтверждения
+          example: "2024-01-15T10:30:00Z"
+        acknowledgedBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID пользователя, подтвердившего алерт
+          example: "123e4567-e89b-12d3-a456-426614174002"
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания
+          example: "2024-01-15T10:30:00Z"
+
+    AcknowledgeAlertDto:
+      type: object
+      required:
+        - acknowledgedBy
+      properties:
+        acknowledgedBy:
+          type: string
+          format: uuid
+          description: ID пользователя, подтверждающего алерт
+          example: "123e4567-e89b-12d3-a456-426614174002"
+
+    # ========================================
+    # NOTIFICATION SERVICE SCHEMAS
+    # ========================================
+
+    NotificationRequest:
+      type: object
+      required:
+        - recipient
+        - subject
+        - body
+        - type
+        - priority
+      properties:
+        recipient:
+          type: string
+          format: email
+          description: Email получателя
+          example: "user@example.com"
+        subject:
+          type: string
+          description: Тема уведомления
+          example: "Важное уведомление"
+        body:
+          type: string
+          description: Текст уведомления
+          example: "Это важное уведомление для вас"
+        type:
+          type: integer
+          enum: [0, 1, 2]
+          description: Тип уведомления (0 - Email, 1 - SMS, 2 - Push)
+          example: 0
+        priority:
+          type: integer
+          enum: [0, 1, 2]
+          description: Приоритет (0 - Low, 1 - Medium, 2 - High)
+          example: 1
+        templateName:
+          type: string
+          nullable: true
+          description: Название шаблона
+          example: "welcome_template"
+        templateParameters:
+          type: object
+          additionalProperties:
+            type: string
+          description: Параметры шаблона
+          example:
+            userName: "Иван Иванов"
+            login: "user@example.com"
+
+    NotificationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Успешность операции
+          example: true
+        errorMessage:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке
+          example: "Failed to send notification"
+
+    # ========================================
+    # COMMON SCHEMAS
+    # ========================================
+
+    ErrorResponse:
+      type: object
+      properties:
+        errorMessage:
+          type: string
+          description: Детальное сообщение об ошибке
+          example: "Detailed error message"
+        
+
+    DeadLetterMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сообщения Dead Letter
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        messageId:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор сообщения в очереди
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        body:
+          type: string
+          description: Тело сообщения
+          example: "{\"patientId\":\"123e4567-e89b-12d3-a456-426614174000\",\"type\":\"heart_rate\",\"value\":75.0,\"timestamp\":\"2024-01-15T10:30:00Z\"}"
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Заголовки сообщения
+          example:
+            Content-Type: "application/json"
+            X-Correlation-Id: "1234567890"
+        deliveryCount:
+          type: integer
+          description: Количество попыток доставки
+          example: 1
+        enqueuedAt:
+          type: string
+          format: date-time
+          description: Время поступления в очередь
+          example: "2024-01-15T10:30:00Z"
+        lockedUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время разблокировки сообщения
+          example: "2024-01-15T10:30:00Z"
+        deadLetterReason:
+          type: string
+          description: Причина Dead Letter
+          example: "MaxDeliveryCountReached"
+        errorMessage:
+          type: string
+          nullable: true
+          description: Сообщение об ошибке при доставке
+          example: "Failed to process message"
+        lastDeliveryAttempt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время последней попытки доставки
+          example: "2024-01-15T10:30:00Z"
+
+    # ========================================
+    # DEVICES SCHEMAS
+    # ========================================
+
+    DeviceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор устройства
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: Название устройства
+          example: "Pulse-meter 1"
+        ward:
+          type: integer
+          description: Номер палаты, к которой привязано устройство
+          example: 101
+        inUsing:
+          type: boolean
+          description: Статус устройства
+          example: "true"
+        readableMetrics:
+          type: array
+          description: Считываемые устройством метрики
+          example: ["Pulse"]
+        patientId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID пациента, к которому привязано устройство (если в использовании)
+          example: "123e4567-e89b-12d3-a456-426614174001"
+
+    ApiDeviceDto:
+      type: object
+      required:
+        - name
+        - ward
+        - readableMetrics
+      properties:
+        name:
+          type: string
+          description: Название устройства
+          example: "Pulse-meter 1"
+        ward:
+          type: integer
+          description: Номер палаты, к которой привязать устройство
+          example: 101
+        readableMetrics:
+          type: array
+          description: Считываемые метрики
+          example: ["Pulse"]
+
+    DeviceShortDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор устройства
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: Название устройства
+          example: "Pulse-meter 1"
+        readableMetrics:
+          type: array
+          description: Считываемые метрики
+          example: [ "Pulse" ]
+
+    AttachDeviceDto:
+      type: object
+      required:
+        - deviceId
+        - patientId
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: ID устройства для привязки
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        patientId:
+          type: string
+          format: uuid
+          description: ID пациента для привязки
+          example: "123e4567-e89b-12d3-a456-426614174001"
+
+tags:
+  - name: Authentication
+    description: Операции аутентификации и авторизации
+  - name: Password Recovery
+    description: Восстановление пароля
+  - name: Patients
+    description: Управление пациентами
+  - name: Metrics
+    description: Управление метриками пациентов
+  - name: Alerts
+    description: Управление алертами
+  - name: SignalR
+    description: Real-time подключения через WebSocket
+  - name: Notifications
+    description: Отправка уведомлений
+  - name: DeadLetter
+    description: Обработка сообщений Dead Letter
+  - name: Devices
+    description: Управление медицинскими устройствами

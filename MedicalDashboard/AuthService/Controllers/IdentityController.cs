@@ -1,0 +1,287 @@
+﻿using System.Security.Claims;
+using AuthService.DTOs;
+using AuthService.Kafka;
+using AuthService.Models;
+using AuthService.Services.Identity;
+using AuthService.Services.Jwt;
+using AuthService.Services.Password;
+using AuthService.Services.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Shared;
+using Shared.Extensions.Logging;
+
+namespace AuthService.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class IdentityController : ControllerBase
+    {
+        private readonly IIdentityService _identityService;
+        private readonly IJwtBuilder _jwtBuilder;
+        private readonly IPasswordService _passwordService;
+        private readonly ILogger<PasswordRecoveryController> _logger;
+        private readonly IKafkaProducerService _notificationService;
+        private readonly IOneTimePasswordGenerator _oneTimePasswordGenerator;
+        private readonly IUserService _userService;
+
+        public IdentityController(
+            IIdentityService identityService, 
+            IJwtBuilder jwtBuilder, 
+            IPasswordService passwordService,
+            ILogger<PasswordRecoveryController> logger,
+            IKafkaProducerService notificationService,
+            IOneTimePasswordGenerator oneTimePasswordGenerator,
+            IUserService userService) 
+        {
+            _identityService = identityService;
+            _jwtBuilder = jwtBuilder;
+            _passwordService = passwordService;
+            _logger = logger;
+            _notificationService = notificationService;
+            _oneTimePasswordGenerator = oneTimePasswordGenerator;
+            _userService = userService;
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            try
+            {
+                var user = await _identityService.GetUserAsync(request.Email);
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                var response = await _identityService.LoginAsync(
+                    request.Email, 
+                    request.Password, 
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                return Ok(new LoginResponse
+                {
+                    AccessToken = response.AccessToken,
+                    RefreshToken = response.RefreshToken,
+                    Status = response.Status,
+                    Role = response.Role,
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogFailure("Ошибка входа", ex);
+                return BadRequest(new { message = "Could not authenticate user." });
+            }
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            try
+            {
+                var u = await _identityService.GetUserAsync(request.Email);
+
+                // проверка есть пользователь уже в сервисе 
+                if (u != null)
+                {
+                    return BadRequest("User already exists.");
+                }
+                // генерация пароля для пользователя 
+                var password = _oneTimePasswordGenerator.GeneratePassword(12);
+                var (passwordHash, salt) = _passwordService.CreatePasswordHash(password);
+
+                // создание пользователя
+                var user = new User
+                {
+                    Email = request.Email,
+                    Password = passwordHash,
+                    Salt = salt,
+                    IsActive = true,
+                    FirstName = request.FirstName,
+                    MiddleName = request.MiddleName,
+                    LastName = request.LastName,
+                    PhoneNumber = request.PhoneNumber,
+                    Role = request.Role
+                };
+
+                try
+                {
+                    await _identityService.InsertUserAsync(user);
+
+                    // отправка письма на почту 
+                    var message = new NotificationMessage
+                    {
+                        Type = 0,
+                        Recipient = request.Email,
+                        Subject = "Welcome letter",
+                        Body = "Welcome letter",
+                        Priority = 0,
+                        TemplateName = "Welcome letter",
+                        TemplateParameters = new Dictionary<string, string>
+                        {
+                            { "userName", $"{request.FirstName} {request.LastName}" },
+                            { "login", request.Email },
+                            { "password", password }
+                        }
+                    };
+
+                    await _notificationService.SendNotificationAsync(message);
+
+                    return Ok();
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { message = $"Could not create user. Error: {ex.Message}" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogFailure("Необработанная ошибка во время регистрации", ex);
+                return StatusCode(500, "Произошла непредвиденная ошибка");
+            }
+        }
+
+
+        [HttpGet("validate")]
+        public async Task<IActionResult> Validate(string email, string token)
+        {
+            try
+            {
+                var u = await _identityService.GetUserAsync(email);
+
+                if (u == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                var userId = _jwtBuilder.ValidateToken(token);
+
+                if (Guid.Parse(userId) != u.Id)
+                {
+                    return BadRequest("Invalid token.");
+                }
+
+                return Ok(userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogFailure("Необработанная ошибка во время валидации логина", ex);
+                return StatusCode(500, "Произошла непредвиденная ошибка");
+            }
+        }
+        
+        [HttpPut("update-password")]
+        [Authorize]
+        public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordRequest request)
+        {
+            try
+            {
+                //получаем userId из клеймов и пытаемся обновть пароль
+                var userId = GetUserIdFromClaims();
+                var result = await _userService.UpdatePassword(userId, request);
+                
+                return result.IsFailed ? BadRequest(result.Errors) : Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                var tokens = await _identityService.RefreshTokenAsync(
+                    request.RefreshToken,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                return Ok(new TokensResponse
+                {
+                    AccessToken = tokens.AccessToken,
+                    RefreshToken = tokens.RefreshToken
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("revoke-token")]
+        public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                await _identityService.RevokeTokenAsync(
+                    request.RefreshToken,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                return Ok(new { message = "Токен успешно отозван" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("get-roles")]
+        public async Task<IActionResult> GetRoles()
+        {
+            var roles = Enum.GetNames(typeof(Role));
+            
+            return Ok(roles);
+        }
+
+        [HttpGet("users")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? emailFilter = null, [FromQuery] string? roleFilter = null)
+        {
+            try
+            {
+                var (users, totalCount) = await _identityService.GetUsersAsync(page, pageSize, emailFilter, roleFilter);
+                
+                var response = users.Select(u => new UserListResponse
+                {
+                    Id = u.Id,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    MiddleName = u.MiddleName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    IsActive = u.IsActive,
+                    Role = u.Role
+                });
+
+                return Ok(new
+                {
+                    Users = response,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogFailure("Ошибка при получении списка пользователей", ex);
+                return StatusCode(500, "Произошла непредвиденная ошибка");
+            }
+        }
+
+        private Guid GetUserIdFromClaims()
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "userId" || c.Type == ClaimTypes.NameIdentifier)?.Value;
+            _logger.LogInfo($"Получен userId из клеймов для смены пароля: {userId}");
+            return Guid.Parse(userId ?? throw new UnauthorizedAccessException("userId не найден в клеймах"));
+        }
+        
+        private Guid GetUserRoleFromClaims()
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "role" || c.Type == ClaimTypes.NameIdentifier)?.Value;
+            _logger.LogInfo($"Получена роль из клеймов для юзера: {userId}");
+            return Guid.Parse(userId ?? throw new UnauthorizedAccessException("role не найдена в клеймах"));
+        }
+    }
+}

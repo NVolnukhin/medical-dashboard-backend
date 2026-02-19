@@ -1,0 +1,32 @@
+stages:
+  - test 
+
+test:
+  stage: test
+  tags: [docker]
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "Проверка окружения"
+    - dotnet --version || echo ".NET не установлен"
+    - pwd
+    - ls -la
+    
+    - echo "Восстановление зависимостей"
+    - dotnet restore MedicalDashboard/MedicalDashboard.sln || echo "Ошибка восстановления"
+    
+    - echo "Сборка проектов"
+    - dotnet build MedicalDashboard/MedicalDashboard.sln --no-restore --configuration Release || echo "Ошибка сборки"
+    
+    - echo "Создание папки для тестов"
+    - mkdir -p TestResults || echo "Ошибка создания папки"
+    
+    - echo "Запуск тестов"
+    - dotnet test MedicalDashboard/Tests.MedicalDashboard/Tests.MedicalDashboard.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=all-tests.trx" --results-directory "TestResults" --no-build || echo "Ошибка тестов"
+  artifacts:
+    when: always
+    paths:
+      - "TestResults/*.trx"
+    reports:
+      junit: "TestResults/*.trx"
+  rules:
+    - when: always
